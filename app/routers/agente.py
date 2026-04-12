@@ -193,27 +193,26 @@ def questoes_inseridas(limite: int = 500):
 
 @router.get("/testar-busca")
 def testar_busca():
-    """Testa se a Google Custom Search API está funcionando."""
+    """Testa se o SerpApi está funcionando."""
     import requests, os
-    api_key = os.getenv("GOOGLE_API_KEY", "")
-    cx      = os.getenv("GOOGLE_CX", "")
-    if not api_key or not cx:
-        return {"ok": False, "erro": "Variáveis GOOGLE_API_KEY ou GOOGLE_CX não configuradas"}
+    api_key = os.getenv("SERP_API_KEY", "")
+    if not api_key:
+        return {"ok": False, "erro": "Variável SERP_API_KEY não configurada"}
     try:
         resp = requests.get(
-            "https://www.googleapis.com/customsearch/v1",
-            params={"key": api_key, "cx": cx, "q": "questões concurso público", "num": 1},
+            "https://serpapi.com/search",
+            params={"api_key": api_key, "q": "questões concurso público", "num": 1, "engine": "google"},
             timeout=10
         )
         data = resp.json()
         if not resp.ok:
-            return {"ok": False, "status": resp.status_code, "erro": data.get("error", {}).get("message", str(data))}
-        items = data.get("items", [])
+            return {"ok": False, "status": resp.status_code, "erro": data.get("error", str(data)[:200])}
+        results = data.get("organic_results", [])
         return {
             "ok": True,
             "status": resp.status_code,
-            "total_results": data.get("searchInformation", {}).get("totalResults"),
-            "primeiro_resultado": items[0].get("link") if items else None
+            "total_results": data.get("search_information", {}).get("total_results"),
+            "primeiro_resultado": results[0].get("link") if results else None
         }
     except Exception as e:
         return {"ok": False, "erro": str(e)}

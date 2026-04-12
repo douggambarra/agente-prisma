@@ -37,43 +37,41 @@ def get_claude():
 
 # ── BUSCA NA WEB ──────────────────────────────────────────────────────────────
 
-# Chaves da Google Custom Search API
-GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY", "AIzaSyB8uFoYEQBuPLI8VjfKrB4W1WPBSIlb8C4")
-GOOGLE_CX      = os.getenv("GOOGLE_CX",      "b7075a2befd54425d")
+# SerpApi — Google Search sem bloqueio
+SERP_API_KEY = os.getenv("SERP_API_KEY", "7fd3bd7dfd5b4cb4fd478e6797918ac72210a227ed07c4c4c5f6791f2d5ea80a")
 
 def buscar_urls(query: str, num: int = 8) -> list:
-    """Busca via Google Custom Search API oficial — funciona de qualquer servidor."""
+    """Busca via SerpApi — resultados reais do Google, sem bloqueio de servidor."""
     urls = []
-    api_key = os.getenv("GOOGLE_API_KEY", GOOGLE_API_KEY)
-    cx      = os.getenv("GOOGLE_CX",      GOOGLE_CX)
-    print(f"[CSE] key={api_key[:8]}... cx={cx} query={query[:50]}")
+    api_key = os.getenv("SERP_API_KEY", SERP_API_KEY)
+    print(f"[SERP] query={query[:60]}")
     try:
         params = {
-            "key": api_key,
-            "cx":  cx,
-            "q":   query,
-            "num": min(10, num),
-            "lr":  "lang_pt",
-            "gl":  "br",
+            "api_key": api_key,
+            "q":       query,
+            "num":     min(10, num),
+            "hl":      "pt",
+            "gl":      "br",
+            "engine":  "google",
         }
         resp = requests.get(
-            "https://www.googleapis.com/customsearch/v1",
-            params=params, timeout=15
+            "https://serpapi.com/search",
+            params=params, timeout=20
         )
-        print(f"[CSE] status={resp.status_code}")
+        print(f"[SERP] status={resp.status_code}")
         if not resp.ok:
-            print(f"[CSE] erro: {resp.text[:300]}")
+            print(f"[SERP] erro: {resp.text[:300]}")
             return urls
         data = resp.json()
-        items = data.get("items", [])
-        print(f"[CSE] items retornados: {len(items)}")
-        for item in items:
+        results = data.get("organic_results", [])
+        print(f"[SERP] resultados: {len(results)}")
+        for item in results:
             link = item.get("link", "")
             if link and _url_valida(link) and link not in urls:
                 urls.append(link)
     except Exception as e:
-        print(f"[CSE] exception: {e}")
-    print(f"[CSE] urls válidas: {len(urls)}")
+        print(f"[SERP] exception: {e}")
+    print(f"[SERP] urls válidas: {len(urls)}")
     return urls
 
 def _url_valida(url: str) -> bool:
@@ -365,9 +363,8 @@ def processar_busca(
         if not urls:
             warn(f"Nenhuma página encontrada para esta query.")
             # Testa se a API está respondendo
-            api_key = os.getenv("GOOGLE_API_KEY", GOOGLE_API_KEY)
-            cx      = os.getenv("GOOGLE_CX",      GOOGLE_CX)
-            info(f"API Key configurada: {'Sim' if api_key else 'NÃO'} | CX: {'Sim' if cx else 'NÃO'}")
+            api_key = os.getenv("SERP_API_KEY", SERP_API_KEY)
+            info(f"SERP API Key configurada: {'Sim' if api_key else 'NÃO'}")
         ok(f"{len(urls)} páginas encontradas.")
 
         for url in urls:
