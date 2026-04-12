@@ -302,6 +302,59 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'DM San
 .cascade-leaf.selected .cl-id{color:var(--purple3);}
 .cascade-node.hidden,.cascade-leaf.hidden{display:none;}
 .cascade-empty{padding:14px;text-align:center;font-size:12px;color:var(--text3);}
+
+/* ── UPLOAD PDF ── */
+.upload-zone{border:2px dashed var(--border2);border-radius:var(--radius-lg);padding:28px 18px;text-align:center;cursor:pointer;transition:all .2s;background:var(--bg3);margin-bottom:10px}
+.upload-zone:hover,.upload-zone.drag{border-color:var(--purple2);background:var(--purple-bg)}
+.upload-zone.has-file{border-color:var(--teal);border-style:solid}
+.upload-zone-icon{font-size:28px;margin-bottom:8px}
+.upload-zone-title{font-size:13px;font-weight:600;color:var(--text2);margin-bottom:4px}
+.upload-zone-sub{font-size:11px;color:var(--text3)}
+.upload-file-badge{display:inline-flex;align-items:center;gap:7px;background:var(--teal-bg);border:1px solid #1a4d3a;border-radius:20px;padding:4px 12px;font-size:11px;color:var(--teal);margin-top:8px}
+.upload-file-badge button{background:none;border:none;color:var(--text3);cursor:pointer;font-size:14px;line-height:1;padding:0}
+.upload-file-badge button:hover{color:var(--red)}
+.upload-row2{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px}
+.upload-optional{border:1.5px dashed var(--border);border-radius:var(--radius);padding:16px 12px;text-align:center;cursor:pointer;background:var(--bg3);transition:all .2s;font-size:12px;color:var(--text3)}
+.upload-optional:hover{border-color:var(--purple2);color:var(--text2)}
+.upload-optional.has-file{border-color:var(--teal);color:var(--teal)}
+.upload-ia-info{background:var(--bg);border:1px solid var(--border);border-left:3px solid var(--purple2);border-radius:var(--radius);padding:10px 12px;font-size:11px;color:var(--text3);margin-bottom:10px;display:flex;gap:9px;align-items:flex-start}
+/* preview */
+.preview-section{animation:fadeUp .25s ease}
+@keyframes fadeUp{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+.preview-prova-card{background:var(--bg);border:1px solid var(--border);border-radius:var(--radius-lg);padding:14px 16px;margin-bottom:14px}
+.preview-prova-title{font-size:11px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;margin-bottom:10px}
+.preview-prova-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.preview-prova-grid .full{grid-column:1/-1}
+.pv-field label{font-size:10px;color:var(--text3);display:block;margin-bottom:3px;text-transform:uppercase;letter-spacing:.05em}
+.pv-field input,.pv-field select{width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:6px;padding:6px 9px;color:var(--text);font-size:12px;font-family:'DM Sans',sans-serif;outline:none}
+.pv-field input:focus,.pv-field select:focus{border-color:var(--purple2)}
+.pv-field select option{background:var(--bg3)}
+.q-list-title{font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px;display:flex;align-items:center;gap:8px}
+.q-count-badge{background:var(--purple-bg);color:var(--purple);border-radius:20px;padding:1px 8px;font-size:11px}
+.q-item{background:var(--bg);border:1px solid var(--border2);border-radius:var(--radius);padding:10px 12px;margin-bottom:7px;display:flex;gap:10px;align-items:flex-start}
+.q-num{min-width:26px;height:26px;border-radius:50%;background:var(--purple-bg);color:var(--purple);font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.q-body{flex:1}
+.q-text{font-size:11px;color:var(--text2);line-height:1.5;margin-bottom:5px}
+.q-footer{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+.q-gab{display:inline-flex;align-items:center;gap:3px;background:var(--teal-bg);color:var(--teal);border-radius:5px;padding:1px 7px;font-size:10px;font-weight:700}
+.q-disc{background:var(--purple-bg);color:var(--purple);border:1px solid var(--purple3);border-radius:20px;padding:1px 7px;font-size:10px}
+.preview-actions{display:flex;gap:8px;margin-top:14px}
+.btn-back-sm{flex:1;padding:9px;background:transparent;color:var(--text3);border:1px solid var(--border);border-radius:var(--radius);font-size:12px;font-weight:600;cursor:pointer;transition:all .2s}
+.btn-back-sm:hover{border-color:var(--border2);color:var(--text)}
+.btn-save-pdf{flex:2;padding:10px;background:var(--teal);color:#fff;border:none;border-radius:var(--radius);font-size:13px;font-weight:700;cursor:pointer;transition:background .2s}
+.btn-save-pdf:hover{background:#27c090}
+.upload-loading{text-align:center;padding:30px 16px}
+.upload-spinner{width:36px;height:36px;border:3px solid var(--border2);border-top-color:var(--purple);border-radius:50%;animation:spin .8s linear infinite;margin:0 auto 12px}
+.upload-loading-text{font-size:13px;color:var(--text2)}
+.upload-loading-step{font-size:11px;color:var(--text3);margin-top:6px}
+.upload-success{text-align:center;padding:28px 16px;animation:fadeUp .3s ease}
+.upload-success-icon{font-size:36px;margin-bottom:10px}
+.upload-success-title{font-size:14px;font-weight:700;color:var(--teal);margin-bottom:5px}
+.upload-success-sub{font-size:12px;color:var(--text3);margin-bottom:16px}
+.upload-stats{display:flex;gap:10px;justify-content:center;margin-bottom:16px}
+.upload-stat{background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius);padding:10px 16px;text-align:center}
+.upload-stat-num{font-family:'Syne',sans-serif;font-size:20px;font-weight:700;color:var(--purple)}
+.upload-stat-lbl{font-size:10px;color:var(--text3);margin-top:2px}
 </style>
 </head>
 <body>
@@ -407,7 +460,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'DM San
             <div class="card-title">Configurar busca</div>
             <div class="tabs">
               <button class="tab active" onclick="switchTab('tematica',this)">Por tema</button>
-              <button class="tab" onclick="switchTab('prova',this)">Por prova completa</button>
+              <button class="tab" onclick="switchTab('prova',this)">Enviar PDF</button>
               <button class="tab" onclick="switchTab('auditoria',this)">Auditar base</button>
             </div>
             <div class="tab-panel active" id="panel-tematica">
@@ -445,38 +498,97 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'DM San
 
             </div>
             <div class="tab-panel" id="panel-prova">
-              <div class="form-row-4">
-                <div class="form-group"><label>Banca</label>
-                  <input type="hidden" id="p-banca" value="CESPE"/>
-                  <div class="cselect-wrap" id="p-banca-wrap">
-                    <div class="cselect-trigger" id="p-banca-trigger" onclick="toggleCSelect('p-banca')">
-                      <span class="cs-text" id="p-banca-display">CESPE</span>
-                      <span class="cs-arrow">&#9660;</span>
-                    </div>
-                    <div class="cselect-dropdown" id="p-banca-dropdown">
-                      <div class="cselect-search">
-                        <input type="text" id="p-banca-search" placeholder="&#128269; Buscar banca..." oninput="filtrarCSelect('p-banca',this.value)" autocomplete="off"/>
-                      </div>
-                      <div class="cselect-list" id="p-banca-list">
-                        <div class="cselect-empty">Carregando...</div>
-                      </div>
-                    </div>
+
+              <!-- VIEW: UPLOAD -->
+              <div id="pdf-view-upload">
+                <div class="upload-ia-info">
+                  <span style="font-size:15px">💡</span>
+                  <div>A IA identifica automaticamente se o gabarito está junto ou em arquivo separado.</div>
+                </div>
+
+                <div class="upload-zone" id="pdf-drop1"
+                  ondragover="pdfEv(event,'pdf-drop1',true)" ondragleave="pdfEv(event,'pdf-drop1',false)"
+                  ondrop="pdfDrop(event,'pdf-drop1','pdf-file1')"
+                  onclick="document.getElementById('pdf-file1').click()">
+                  <div class="upload-zone-icon">📄</div>
+                  <div class="upload-zone-title">Caderno de questões (PDF)</div>
+                  <div class="upload-zone-sub">Arraste ou clique para selecionar</div>
+                  <div id="pdf-badge1"></div>
+                </div>
+                <input type="file" id="pdf-file1" accept=".pdf" style="display:none" onchange="pdfSetFile1(this)">
+
+                <div class="upload-row2">
+                  <div class="upload-optional" id="pdf-drop2"
+                    ondragover="pdfEv(event,'pdf-drop2',true)" ondragleave="pdfEv(event,'pdf-drop2',false)"
+                    ondrop="pdfDrop(event,'pdf-drop2','pdf-file2')"
+                    onclick="document.getElementById('pdf-file2').click()">
+                    <div style="font-size:20px;margin-bottom:5px">📋</div>
+                    <div style="font-size:12px;font-weight:600;color:var(--text2);margin-bottom:3px">Gabarito (opcional)</div>
+                    <div id="pdf-badge2" style="font-size:11px">PDF separado</div>
+                  </div>
+                  <div style="background:var(--bg);border:1.5px dashed var(--border);border-radius:var(--radius);padding:12px;font-size:11px;color:var(--text3);display:flex;flex-direction:column;gap:4px;justify-content:center">
+                    <div style="font-size:10px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:.05em;margin-bottom:2px">A IA vai extrair</div>
+                    <div>✓ Dados da prova e banca</div>
+                    <div>✓ Todas as questões</div>
+                    <div>✓ Gabarito e alternativas</div>
+                    <div>✓ Preview antes de salvar</div>
                   </div>
                 </div>
-                <div class="form-group"><label>Órgão</label><input type="text" id="p-orgao" placeholder="Ex: TRF 1ª Região"/></div>
-                <div class="form-group"><label>Cargo</label><input type="text" id="p-cargo" placeholder="Ex: Analista Judiciário"/></div>
-                <div class="form-group"><label>Ano</label><input type="number" id="p-ano" value="2023" min="2000" max="2025"/></div>
+                <input type="file" id="pdf-file2" accept=".pdf" style="display:none" onchange="pdfSetFile2(this)">
+
+                <button class="btn btn-primary" id="pdf-btn-processar" disabled onclick="pdfProcessar()">
+                  <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><polygon points="3,1 13,7 3,13" fill="white"/></svg>
+                  Processar e extrair questões
+                </button>
               </div>
-              <button class="btn btn-secondary" style="margin-bottom:12px" onclick="addProva()">
-                <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><line x1="6" y1="1" x2="6" y2="11" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><line x1="1" y1="6" x2="11" y2="6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
-                Adicionar à fila
-              </button>
-              <div class="section-lbl">Fila de provas</div>
-              <div id="prova-queue"><div class="empty-q">Nenhuma prova na fila.</div></div>
-              <button class="btn btn-primary" id="btn-prova" onclick="iniciar('prova')" disabled>
-                <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><polygon points="3,1 13,7 3,13" fill="white"/></svg>
-                Processar fila de provas
-              </button>
+
+              <!-- VIEW: LOADING -->
+              <div id="pdf-view-loading" style="display:none">
+                <div class="upload-loading">
+                  <div class="upload-spinner"></div>
+                  <div class="upload-loading-text" id="pdf-loading-text">Lendo os PDFs...</div>
+                  <div class="upload-loading-step" id="pdf-loading-step">A IA está analisando o conteúdo</div>
+                </div>
+              </div>
+
+              <!-- VIEW: PREVIEW -->
+              <div id="pdf-view-preview" style="display:none">
+                <div class="preview-section">
+                  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+                    <div style="font-size:13px;font-weight:600;color:var(--text)">Revisar antes de salvar</div>
+                    <span id="pdf-badge-tipo" style="font-size:10px;font-weight:600;padding:3px 9px;border-radius:20px;background:var(--amber-bg);color:var(--amber)"></span>
+                  </div>
+                  <div class="preview-prova-card">
+                    <div class="preview-prova-title">Dados da Prova</div>
+                    <div class="preview-prova-grid">
+                      <div class="pv-field full"><label>Nome / Título</label><input type="text" id="pv-nome"></div>
+                      <div class="pv-field"><label>Banca</label><input type="text" id="pv-banca"></div>
+                      <div class="pv-field"><label>Data da Prova</label><input type="date" id="pv-data"></div>
+                    </div>
+                  </div>
+                  <div class="q-list-title">Questões extraídas <span class="q-count-badge" id="pv-q-total">0</span></div>
+                  <div id="pv-q-lista"></div>
+                  <div class="preview-actions">
+                    <button class="btn-back-sm" onclick="pdfVoltar()">← Reenviar</button>
+                    <button class="btn-save-pdf" onclick="pdfConfirmar()">Confirmar e salvar no banco</button>
+                  </div>
+                </div>
+              </div>
+
+              <!-- VIEW: SUCESSO -->
+              <div id="pdf-view-success" style="display:none">
+                <div class="upload-success">
+                  <div class="upload-success-icon">✅</div>
+                  <div class="upload-success-title">Prova cadastrada com sucesso!</div>
+                  <div class="upload-success-sub">Questões aninhadas à prova no banco.</div>
+                  <div class="upload-stats">
+                    <div class="upload-stat"><div class="upload-stat-num" id="pdf-s-q">0</div><div class="upload-stat-lbl">Questões</div></div>
+                    <div class="upload-stat"><div class="upload-stat-num" id="pdf-s-p">1</div><div class="upload-stat-lbl">Prova</div></div>
+                  </div>
+                  <button class="btn btn-primary" onclick="pdfNovo()">+ Enviar nova prova</button>
+                </div>
+              </div>
+
             </div>
             <div class="tab-panel" id="panel-auditoria">
               <div class="form-row">
@@ -1399,6 +1511,229 @@ function filtrarQuestoes(query) {
 }
 
 function sleep(ms) { return new Promise(r => setTimeout(r, ms)) }
+
+// ── UPLOAD PDF ────────────────────────────────────────────────────────────────
+let pdfFile1 = null, pdfFile2 = null, pdfJobId = null, pdfDadosExtraidos = null
+
+function pdfEv(e, id, on) {
+  e.preventDefault()
+  document.getElementById(id).classList.toggle('drag', on)
+}
+
+function pdfDrop(e, dropId, inputId) {
+  e.preventDefault()
+  document.getElementById(dropId).classList.remove('drag')
+  const f = e.dataTransfer.files[0]
+  if (!f || !f.name.toLowerCase().endsWith('.pdf')) return
+  if (inputId === 'pdf-file1') { pdfFile1 = f; pdfUpdateDrop1() }
+  else { pdfFile2 = f; pdfUpdateDrop2() }
+  pdfCheckBtn()
+}
+
+function pdfSetFile1(inp) {
+  if (inp.files[0]) { pdfFile1 = inp.files[0]; pdfUpdateDrop1(); pdfCheckBtn() }
+}
+function pdfSetFile2(inp) {
+  if (inp.files[0]) { pdfFile2 = inp.files[0]; pdfUpdateDrop2() }
+}
+
+function pdfUpdateDrop1() {
+  const d = document.getElementById('pdf-drop1')
+  d.classList.add('has-file')
+  document.getElementById('pdf-badge1').innerHTML =
+    `<div class="upload-file-badge">📄 ${pdfFile1.name}<button onclick="pdfRemove1(event)">✕</button></div>`
+}
+function pdfUpdateDrop2() {
+  const d = document.getElementById('pdf-drop2')
+  d.classList.add('has-file')
+  document.getElementById('pdf-badge2').innerHTML =
+    `<span style="color:var(--teal);font-size:11px">📋 ${pdfFile2.name} <span style="cursor:pointer;color:var(--text3)" onclick="pdfRemove2(event)">✕</span></span>`
+}
+function pdfRemove1(e) {
+  e.stopPropagation()
+  pdfFile1 = null
+  document.getElementById('pdf-drop1').classList.remove('has-file')
+  document.getElementById('pdf-badge1').innerHTML = ''
+  document.getElementById('pdf-file1').value = ''
+  pdfCheckBtn()
+}
+function pdfRemove2(e) {
+  e.stopPropagation()
+  pdfFile2 = null
+  document.getElementById('pdf-drop2').classList.remove('has-file')
+  document.getElementById('pdf-badge2').innerHTML = 'PDF separado'
+  document.getElementById('pdf-file2').value = ''
+}
+function pdfCheckBtn() {
+  document.getElementById('pdf-btn-processar').disabled = !pdfFile1
+}
+
+const pdfLoadSteps = [
+  ['Enviando PDFs para a IA...', 'Aguardando processamento'],
+  ['Lendo o caderno de questões...', 'Identificando estrutura da prova'],
+  ['Identificando o gabarito...', 'A IA detectou o formato automaticamente'],
+  ['Extraindo questões...', 'Processando enunciados e alternativas'],
+  ['Vinculando gabarito...', 'Cruzando questões com respostas'],
+  ['Detectando dados da prova...', 'Banca, data, órgão, cargo'],
+  ['Preparando preview...', 'Quase pronto!']
+]
+let pdfLoadIdx = 0, pdfLoadTimer = null
+
+function pdfMostrarView(id) {
+  ;['pdf-view-upload','pdf-view-loading','pdf-view-preview','pdf-view-success'].forEach(v => {
+    document.getElementById(v).style.display = v === id ? '' : 'none'
+  })
+}
+
+async function pdfProcessar() {
+  if (!pdfFile1) return
+  pdfMostrarView('pdf-view-loading')
+  pdfLoadIdx = 0
+  pdfAtualizaStep()
+  pdfLoadTimer = setInterval(() => {
+    pdfLoadIdx = Math.min(pdfLoadIdx + 1, pdfLoadSteps.length - 2)
+    pdfAtualizaStep()
+  }, 1800)
+
+  try {
+    const fd = new FormData()
+    fd.append('prova', pdfFile1)
+    if (pdfFile2) fd.append('gabarito', pdfFile2)
+
+    const res = await fetch(`${API}/upload-prova/processar`, { method: 'POST', body: fd })
+    if (!res.ok) throw new Error(`HTTP ${res.status}`)
+    const { job_id } = await res.json()
+    pdfJobId = job_id
+
+    // Polling
+    await pdfPolling(job_id)
+
+  } catch(e) {
+    clearInterval(pdfLoadTimer)
+    addLog('err', 'Erro no upload: ' + e.message)
+    pdfMostrarView('pdf-view-upload')
+  }
+}
+
+async function pdfPolling(jobId) {
+  for (let i = 0; i < 90; i++) {
+    await sleep(2000)
+    try {
+      const res = await fetch(`${API}/upload-prova/job/${jobId}`)
+      const data = await res.json()
+      if (data.status === 'aguardando_confirmacao') {
+        clearInterval(pdfLoadTimer)
+        pdfDadosExtraidos = data.resultado
+        pdfMostrarPreview(data.resultado)
+        return
+      }
+      if (data.status === 'erro') {
+        clearInterval(pdfLoadTimer)
+        addLog('err', 'Erro no processamento: ' + (data.erro || 'desconhecido'))
+        pdfMostrarView('pdf-view-upload')
+        return
+      }
+    } catch(e) { /* continua tentando */ }
+  }
+  clearInterval(pdfLoadTimer)
+  addLog('err', 'Timeout: processamento demorou demais.')
+  pdfMostrarView('pdf-view-upload')
+}
+
+function pdfAtualizaStep() {
+  const [txt, sub] = pdfLoadSteps[pdfLoadIdx]
+  document.getElementById('pdf-loading-text').textContent = txt
+  document.getElementById('pdf-loading-step').textContent = sub
+}
+
+function pdfMostrarPreview(dados) {
+  const tipo = pdfFile2 ? 'Prova + Gabarito separado' : 'Prova com gabarito incluso'
+  document.getElementById('pdf-badge-tipo').textContent = tipo
+  document.getElementById('pv-nome').value = dados.dados_prova?.nome || ''
+  document.getElementById('pv-banca').value = dados.dados_prova?.banca || ''
+  document.getElementById('pv-data').value = dados.dados_prova?.data_da_prova || ''
+
+  const questoes = dados.questoes || []
+  document.getElementById('pv-q-total').textContent = questoes.length
+
+  const lista = document.getElementById('pv-q-lista')
+  const MAX = 5
+  lista.innerHTML = questoes.slice(0, MAX).map(q => `
+    <div class="q-item">
+      <div class="q-num">${q.numero}</div>
+      <div class="q-body">
+        <div class="q-text">${escHtml((q.pergunta||'').substring(0,120))}…</div>
+        <div class="q-footer">
+          ${q.disciplina ? `<span class="q-disc">${escHtml(q.disciplina)}</span>` : ''}
+          ${q.gabarito ? `<span class="q-gab">✓ ${escHtml(q.gabarito)}</span>` : ''}
+        </div>
+      </div>
+    </div>`).join('')
+
+  if (questoes.length > MAX) {
+    lista.innerHTML += `<div style="text-align:center;color:var(--text3);font-size:11px;padding:8px 0">... + ${questoes.length - MAX} questões — todas extraídas</div>`
+  }
+
+  pdfMostrarView('pdf-view-preview')
+}
+
+async function pdfConfirmar() {
+  if (!pdfDadosExtraidos || !pdfJobId) return
+  const btn = document.querySelector('.btn-save-pdf')
+  btn.disabled = true
+  btn.textContent = 'Salvando...'
+
+  const usuario = window._usuario || { id: 1 }
+  const questoes = pdfDadosExtraidos.questoes || []
+
+  const body = {
+    id_usuario: usuario.id,
+    job_id: pdfJobId,
+    dados_prova: {
+      nome:          document.getElementById('pv-nome').value,
+      banca:         document.getElementById('pv-banca').value,
+      data_da_prova: document.getElementById('pv-data').value || null,
+      id_orgao:      null
+    },
+    questoes: questoes
+  }
+
+  try {
+    const res = await fetch(`${API}/upload-prova/confirmar`, {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify(body)
+    })
+    if (!res.ok) throw new Error(`HTTP ${res.status}`)
+    const resultado = await res.json()
+    document.getElementById('pdf-s-q').textContent = resultado.questoes_inseridas || 0
+    document.getElementById('pdf-s-p').textContent = 1
+    addLog('ok', `Prova #${resultado.id_prova} cadastrada com ${resultado.questoes_inseridas} questões.`)
+    carregarMetricas()
+    pdfMostrarView('pdf-view-success')
+  } catch(e) {
+    addLog('err', 'Erro ao salvar: ' + e.message)
+    btn.disabled = false
+    btn.textContent = 'Confirmar e salvar no banco'
+  }
+}
+
+function pdfVoltar() {
+  pdfMostrarView('pdf-view-upload')
+}
+
+function pdfNovo() {
+  pdfFile1 = null; pdfFile2 = null; pdfJobId = null; pdfDadosExtraidos = null
+  document.getElementById('pdf-drop1').classList.remove('has-file')
+  document.getElementById('pdf-drop2').classList.remove('has-file')
+  document.getElementById('pdf-badge1').innerHTML = ''
+  document.getElementById('pdf-badge2').innerHTML = 'PDF separado'
+  document.getElementById('pdf-file1').value = ''
+  document.getElementById('pdf-file2').value = ''
+  document.getElementById('pdf-btn-processar').disabled = true
+  pdfMostrarView('pdf-view-upload')
+}
+
 </script>
 </body>
 </html>
