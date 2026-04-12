@@ -40,9 +40,12 @@ def get_claude():
 # SerpApi — Google Search sem bloqueio
 SERP_API_KEY = os.getenv("SERP_API_KEY", "7fd3bd7dfd5b4cb4fd478e6797918ac72210a227ed07c4c4c5f6791f2d5ea80a")
 
-def buscar_urls(query: str, num: int = 8) -> list:
-    """Busca via SerpApi — resultados reais do Google, sem bloqueio de servidor."""
-    urls = []
+def buscar_resultados(query: str, num: int = 8) -> list:
+    """
+    Busca via SerpApi e retorna lista com url + texto (snippet).
+    Usa snippets diretamente — não depende de acessar as páginas.
+    """
+    resultados = []
     api_key = os.getenv("SERP_API_KEY", SERP_API_KEY)
     print(f"[SERP] query={query[:60]}")
     try:
@@ -54,25 +57,29 @@ def buscar_urls(query: str, num: int = 8) -> list:
             "gl":      "br",
             "engine":  "google",
         }
-        resp = requests.get(
-            "https://serpapi.com/search",
-            params=params, timeout=20
-        )
+        resp = requests.get("https://serpapi.com/search", params=params, timeout=15)
         print(f"[SERP] status={resp.status_code}")
         if not resp.ok:
-            print(f"[SERP] erro: {resp.text[:300]}")
-            return urls
+            print(f"[SERP] erro: {resp.text[:200]}")
+            return resultados
         data = resp.json()
-        results = data.get("organic_results", [])
-        print(f"[SERP] resultados: {len(results)}")
-        for item in results:
+        items = data.get("organic_results", [])
+        print(f"[SERP] {len(items)} resultados")
+        for item in items:
             link = item.get("link", "")
-            if link and _url_valida(link) and link not in urls:
-                urls.append(link)
+            if not link or not _url_valida(link):
+                continue
+            # Monta texto com título + snippet
+            partes = []
+            if item.get("title"):   partes.append(item["title"])
+            if item.get("snippet"): partes.append(item["snippet"])
+            resultados.append({"url": link, "texto": "\n".join(partes)})
     except Exception as e:
         print(f"[SERP] exception: {e}")
-    print(f"[SERP] urls válidas: {len(urls)}")
-    return urls
+    return resultados
+
+def buscar_urls(query: str, num: int = 8) -> list:
+    return [r["url"] for r in buscar_resultados(query, num)]
 
 def _url_valida(url: str) -> bool:
     bloqueados = ["google.", "youtube.", "facebook.", "instagram.",
@@ -93,6 +100,7 @@ def buscar_pagina(url: str) -> str:
     except Exception as e:
         print(f"Erro página {url}: {e}")
         return ""
+
 
 # ── CLAUDE: INTERPRETAR COMANDO ───────────────────────────────────────────────
 
@@ -358,42 +366,48 @@ def processar_busca(
     todas_questoes = []
     urls_visitadas = set()
 
-    # 2. Para cada query, busca URLs e extrai questões
+    # 2. Para cada query, busca e extrai questões
     for query in queries:
         if len(todas_questoes) >= limite * 3:
             break
 
         info(f'Buscando: "{query[:70]}"')
         try:
-            urls = buscar_urls(query, num=5)
+            resultados = buscar_resultados(query, num=5)
         except Exception as e:
             err(f"Erro na busca: {str(e)[:100]}")
-            urls = []
-        if not urls:
-            warn(f"Nenhuma página encontrada para esta query.")
-            # Testa se a API está respondendo
-            api_key = os.getenv("SERP_API_KEY", SERP_API_KEY)
-            info(f"SERP API Key configurada: {'Sim' if api_key else 'NÃO'}")
-        ok(f"{len(urls)} páginas encontradas.")
+            resultados = []
 
-        for url in urls:
+        if not resultados:
+            warn("Nenhum resultado encontrado para esta query.")
+            api_key = os.getenv("SERP_API_KEY", SERP_API_KEY)
+            info(f"SERP API Key: {'Sim' if api_key else 'NÃO'}")
+        ok(f"{len(resultados)} páginas encontradas.")
+
+        for r in resultados:
             if len(todas_questoes) >= limite * 3:
                 break
+            url   = r["url"]
+            texto = r["texto"]  # snippet do SerpApi
+
             if url in urls_visitadas:
                 continue
             urls_visitadas.add(url)
 
+            # Tenta ler a página — se falhar usa o snippet
             info(f"Lendo: {url[:80]}")
-            texto = buscar_pagina(url)
-            if not texto:
-                warn("Página inacessível.")
+            texto_pagina = buscar_pagina(url)
+            if texto_pagina and len(texto_pagina) > 200:
+                texto = texto_pagina  # página completa disponível
+            elif not texto:
+                warn("Página inacessível e sem snippet.")
                 continue
 
             info("Extraindo questões com IA...")
             questoes = extrair_questoes_com_claude(texto)
-            ok(f"{len(questoes)} questões encontradas nesta página.")
+            ok(f"{len(questoes)} questões encontradas.")
             todas_questoes.extend(questoes)
-            time.sleep(1)
+            time.sleep(0.5)
 
     ok(f"Total coletado: {len(todas_questoes)} questões brutas.")
 
