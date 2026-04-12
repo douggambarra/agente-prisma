@@ -1,0 +1,899 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Prisma — Agente IA</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet"/>
+<style>
+:root {
+  --bg:       #0e0f11;
+  --bg2:      #161719;
+  --bg3:      #1e2023;
+  --border:   #2a2c30;
+  --border2:  #363940;
+  --text:     #e8e9eb;
+  --text2:    #9a9da5;
+  --text3:    #5c5f68;
+  --purple:   #8b7cf8;
+  --purple2:  #6c5ce7;
+  --purple3:  #3d3480;
+  --purple-bg:#1a1730;
+  --teal:     #2dd4a0;
+  --teal-bg:  #0d2b22;
+  --amber:    #f0a834;
+  --amber-bg: #261e0a;
+  --red:      #f06060;
+  --red-bg:   #261010;
+  --green:    #5dd47a;
+  --green-bg: #0d2216;
+  --radius:   10px;
+  --radius-lg:14px;
+}
+
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;font-size:14px;line-height:1.5}
+
+/* ── LAYOUT ────────────────────────────────── */
+.app{display:flex;height:100vh;overflow:hidden}
+
+/* ── SIDEBAR ───────────────────────────────── */
+.sidebar{
+  width:220px;min-width:220px;
+  background:var(--bg2);
+  border-right:1px solid var(--border);
+  display:flex;flex-direction:column;
+  padding:0;overflow:hidden;
+}
+.sidebar-logo{
+  display:flex;align-items:center;gap:10px;
+  padding:20px 18px 16px;
+  border-bottom:1px solid var(--border);
+}
+.logo-mark{
+  width:34px;height:34px;min-width:34px;
+  background:var(--purple2);
+  border-radius:10px;
+  display:flex;align-items:center;justify-content:center;
+}
+.logo-mark svg{width:18px;height:18px}
+.logo-text .name{font-family:'Syne',sans-serif;font-size:15px;font-weight:700;color:var(--text);letter-spacing:-0.02em}
+.logo-text .sub{font-size:11px;color:var(--text3);margin-top:1px}
+
+.nav-group{padding:16px 10px 4px}
+.nav-label{font-size:10px;font-weight:600;color:var(--text3);letter-spacing:0.08em;text-transform:uppercase;padding:0 8px;margin-bottom:4px}
+.nav-item{
+  display:flex;align-items:center;gap:9px;
+  padding:8px 10px;border-radius:var(--radius);
+  font-size:13px;color:var(--text2);
+  cursor:pointer;transition:all 0.15s;
+  border:1px solid transparent;
+  user-select:none;
+}
+.nav-item:hover{background:var(--bg3);color:var(--text)}
+.nav-item.active{background:var(--purple-bg);color:var(--purple);border-color:var(--purple3)}
+.nav-item svg{width:15px;height:15px;min-width:15px;opacity:0.7}
+.nav-item.active svg{opacity:1}
+.nav-badge{
+  margin-left:auto;
+  background:var(--amber-bg);color:var(--amber);
+  font-size:10px;font-weight:600;
+  padding:2px 6px;border-radius:20px;
+}
+
+.sidebar-bottom{
+  margin-top:auto;
+  padding:14px 18px;
+  border-top:1px solid var(--border);
+}
+.user-card{display:flex;align-items:center;gap:10px}
+.user-avatar{
+  width:30px;height:30px;min-width:30px;
+  border-radius:50%;
+  background:var(--purple-bg);
+  border:1px solid var(--purple3);
+  display:flex;align-items:center;justify-content:center;
+  font-size:11px;font-weight:600;color:var(--purple);
+  font-family:'Syne',sans-serif;
+}
+.user-info .uname{font-size:13px;font-weight:500;color:var(--text)}
+.user-info .urole{font-size:11px;color:var(--text3)}
+
+/* ── MAIN ──────────────────────────────────── */
+.main{flex:1;display:flex;flex-direction:column;overflow:hidden}
+
+.topbar{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:0 24px;height:56px;min-height:56px;
+  border-bottom:1px solid var(--border);
+  background:var(--bg2);
+}
+.topbar-title{font-family:'Syne',sans-serif;font-size:15px;font-weight:600;color:var(--text);letter-spacing:-0.01em}
+.status-pill{
+  display:flex;align-items:center;gap:7px;
+  padding:5px 12px;border-radius:20px;
+  border:1px solid var(--border2);
+  font-size:12px;color:var(--text2);
+}
+.dot{width:7px;height:7px;border-radius:50%;background:var(--text3);min-width:7px}
+.dot.online{background:var(--teal);box-shadow:0 0 6px var(--teal)}
+.dot.running{background:var(--amber);animation:pulse 1s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:0.4}}
+
+.content{flex:1;overflow-y:auto;padding:24px}
+.content::-webkit-scrollbar{width:4px}
+.content::-webkit-scrollbar-track{background:transparent}
+.content::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px}
+
+/* ── MÉTRICAS ──────────────────────────────── */
+.metrics{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-bottom:20px}
+.metric{
+  background:var(--bg2);border:1px solid var(--border);
+  border-radius:var(--radius-lg);padding:16px;
+  transition:border-color 0.2s;
+}
+.metric:hover{border-color:var(--border2)}
+.metric-label{font-size:11px;color:var(--text3);margin-bottom:8px;text-transform:uppercase;letter-spacing:0.05em}
+.metric-value{font-family:'Syne',sans-serif;font-size:24px;font-weight:700;color:var(--text);letter-spacing:-0.02em}
+.metric-delta{font-size:11px;color:var(--text3);margin-top:4px}
+.metric-delta.up{color:var(--teal)}
+
+/* ── GRID ──────────────────────────────────── */
+.grid{display:grid;grid-template-columns:1fr 340px;gap:16px;align-items:start}
+
+/* ── CARD ──────────────────────────────────── */
+.card{
+  background:var(--bg2);border:1px solid var(--border);
+  border-radius:var(--radius-lg);padding:20px;
+}
+.card-title{
+  font-family:'Syne',sans-serif;font-size:13px;font-weight:600;
+  color:var(--text);letter-spacing:0.01em;margin-bottom:16px;
+}
+
+/* ── TABS ──────────────────────────────────── */
+.tabs{display:flex;gap:2px;margin-bottom:18px;background:var(--bg3);border-radius:var(--radius);padding:3px}
+.tab{
+  flex:1;padding:7px 6px;font-size:12px;font-weight:500;
+  text-align:center;cursor:pointer;
+  color:var(--text2);background:transparent;
+  border:none;border-radius:8px;transition:all 0.15s;
+}
+.tab:hover{color:var(--text)}
+.tab.active{background:var(--bg2);color:var(--purple);box-shadow:0 1px 3px rgba(0,0,0,0.3)}
+.tab-panel{display:none}
+.tab-panel.active{display:block}
+
+/* ── FORM ──────────────────────────────────── */
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px}
+.form-row-4{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:8px;margin-bottom:12px}
+.form-group{display:flex;flex-direction:column;gap:5px}
+.form-group label{font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:0.05em}
+.form-group select,
+.form-group input{
+  width:100%;background:var(--bg3);
+  border:1px solid var(--border);
+  border-radius:var(--radius);
+  padding:8px 10px;font-size:13px;
+  color:var(--text);font-family:'DM Sans',sans-serif;
+  outline:none;transition:border-color 0.15s;
+}
+.form-group select:focus,
+.form-group input:focus{border-color:var(--purple2)}
+.form-group select option{background:var(--bg3)}
+
+/* ── TAGS ──────────────────────────────────── */
+.tags{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:14px}
+.tag{
+  font-size:11px;padding:4px 10px;border-radius:20px;
+  border:1px solid var(--border2);color:var(--text2);
+  cursor:pointer;background:transparent;transition:all 0.15s;
+}
+.tag:hover{border-color:var(--purple2);color:var(--text)}
+.tag.active{background:var(--purple-bg);border-color:var(--purple3);color:var(--purple)}
+
+/* ── FONTES ────────────────────────────────── */
+.sources{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:14px}
+.source-item{
+  display:flex;align-items:center;gap:8px;
+  font-size:12px;color:var(--text2);
+  padding:5px 0;cursor:pointer;
+}
+.source-item input[type=checkbox]{accent-color:var(--purple);width:13px;height:13px}
+
+/* ── BUTTONS ───────────────────────────────── */
+.btn{
+  width:100%;padding:10px;border:none;border-radius:var(--radius);
+  font-size:13px;font-weight:500;font-family:'DM Sans',sans-serif;
+  cursor:pointer;display:flex;align-items:center;justify-content:center;gap:7px;
+  transition:all 0.15s;
+}
+.btn-primary{background:var(--purple2);color:#fff}
+.btn-primary:hover{background:var(--purple)}
+.btn-primary:active{transform:scale(0.99)}
+.btn-primary:disabled{background:var(--bg3);color:var(--text3);cursor:not-allowed}
+.btn-secondary{background:transparent;color:var(--purple);border:1px solid var(--purple3)}
+.btn-secondary:hover{background:var(--purple-bg)}
+.btn-secondary:disabled{border-color:var(--border);color:var(--text3);cursor:not-allowed}
+.btn-teal{background:var(--teal-bg);color:var(--teal);border:1px solid #1a4d3a}
+.btn-teal:hover{background:#122e22}
+
+/* ── LOG ───────────────────────────────────── */
+.log{
+  background:var(--bg);border:1px solid var(--border);
+  border-radius:var(--radius);padding:12px;
+  font-family:monospace;font-size:11px;
+  color:var(--text2);line-height:1.9;
+  max-height:160px;overflow-y:auto;
+}
+.log::-webkit-scrollbar{width:3px}
+.log::-webkit-scrollbar-thumb{background:var(--border2)}
+.log-line{display:flex;gap:10px}
+.log-time{color:var(--text3);min-width:50px}
+.log-ok{color:var(--teal)}
+.log-err{color:var(--red)}
+.log-info{color:#7ab3f0}
+.log-warn{color:var(--amber)}
+
+/* ── PROGRESS ──────────────────────────────── */
+.progress-label{display:flex;justify-content:space-between;font-size:11px;color:var(--text3);margin-bottom:6px}
+.progress-bar{height:4px;background:var(--bg3);border-radius:2px;overflow:hidden;margin-bottom:14px}
+.progress-fill{height:100%;background:var(--purple2);border-radius:2px;transition:width 0.4s}
+
+/* ── FILA ──────────────────────────────────── */
+.queue-item{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:9px 11px;background:var(--bg3);
+  border-radius:var(--radius);margin-bottom:7px;
+  border:1px solid var(--border);
+}
+.qi-title{font-size:12px;font-weight:500;color:var(--text)}
+.qi-sub{font-size:11px;color:var(--text3);margin-top:2px}
+.qi-rm{background:none;border:none;color:var(--text3);cursor:pointer;font-size:16px;padding:0 3px;line-height:1}
+.qi-rm:hover{color:var(--red)}
+.empty-q{
+  text-align:center;padding:18px;
+  background:var(--bg3);border-radius:var(--radius);
+  font-size:12px;color:var(--text3);margin-bottom:10px;
+  border:1px dashed var(--border);
+}
+
+/* ── AUDIT ITEMS ───────────────────────────── */
+.audit-item{
+  display:flex;align-items:flex-start;gap:10px;
+  padding:11px;background:var(--bg3);
+  border-radius:var(--radius);margin-bottom:8px;
+  border:1px solid var(--border);
+}
+.abadge{font-size:10px;font-weight:600;padding:3px 8px;border-radius:20px;white-space:nowrap}
+.abadge-err{background:var(--red-bg);color:var(--red)}
+.abadge-warn{background:var(--amber-bg);color:var(--amber)}
+.abadge-ok{background:var(--green-bg);color:var(--green)}
+.atext{font-size:12px;color:var(--text);line-height:1.4}
+.asub{font-size:11px;color:var(--text3);margin-top:3px}
+.section-lbl{font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:0.05em;margin-bottom:8px}
+
+/* ── LOGIN ─────────────────────────────────── */
+.login-screen{
+  position:fixed;inset:0;
+  background:var(--bg);
+  display:flex;align-items:center;justify-content:center;
+  z-index:100;
+}
+.login-box{
+  width:360px;
+  background:var(--bg2);
+  border:1px solid var(--border);
+  border-radius:18px;
+  padding:36px;
+}
+.login-logo{display:flex;align-items:center;gap:12px;margin-bottom:28px}
+.login-title{font-family:'Syne',sans-serif;font-size:20px;font-weight:700;color:var(--text);margin-bottom:4px;letter-spacing:-0.02em}
+.login-sub{font-size:13px;color:var(--text3);margin-bottom:24px}
+.login-field{margin-bottom:14px}
+.login-field label{display:block;font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:0.05em;margin-bottom:6px}
+.login-field input{
+  width:100%;background:var(--bg3);
+  border:1px solid var(--border2);
+  border-radius:var(--radius);
+  padding:10px 12px;font-size:14px;
+  color:var(--text);font-family:'DM Sans',sans-serif;
+  outline:none;transition:border-color 0.15s;
+}
+.login-field input:focus{border-color:var(--purple2)}
+.login-err{font-size:12px;color:var(--red);margin-bottom:10px;display:none}
+.login-btn{
+  width:100%;padding:11px;
+  background:var(--purple2);color:#fff;
+  border:none;border-radius:var(--radius);
+  font-size:14px;font-weight:500;font-family:'DM Sans',sans-serif;
+  cursor:pointer;margin-top:6px;transition:background 0.15s;
+}
+.login-btn:hover{background:var(--purple)}
+</style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div class="login-screen" id="login-screen">
+  <div class="login-box">
+    <div class="login-logo">
+      <div class="logo-mark" style="width:40px;height:40px">
+        <svg viewBox="0 0 18 18" fill="none">
+          <polygon points="9,2 16,6 16,12 9,16 2,12 2,6" fill="none" stroke="white" stroke-width="1.5"/>
+          <circle cx="9" cy="9" r="2.2" fill="white"/>
+        </svg>
+      </div>
+      <div>
+        <div class="login-title">Prisma Concursos</div>
+        <div class="login-sub">Agente IA — painel de controle</div>
+      </div>
+    </div>
+    <div class="login-field">
+      <label>Login</label>
+      <input type="text" id="l-login" placeholder="seu login" autocomplete="username"/>
+    </div>
+    <div class="login-field">
+      <label>Senha</label>
+      <input type="password" id="l-senha" placeholder="••••••••" autocomplete="current-password"/>
+    </div>
+    <div class="login-err" id="l-err">Login ou senha incorretos.</div>
+    <button class="login-btn" onclick="fazerLogin()">Entrar</button>
+  </div>
+</div>
+
+<!-- APP -->
+<div class="app" id="app" style="display:none">
+  <aside class="sidebar">
+    <div class="sidebar-logo">
+      <div class="logo-mark">
+        <svg viewBox="0 0 18 18" fill="none">
+          <polygon points="9,2 16,6 16,12 9,16 2,12 2,6" fill="none" stroke="white" stroke-width="1.5"/>
+          <circle cx="9" cy="9" r="2.2" fill="white"/>
+        </svg>
+      </div>
+      <div class="logo-text">
+        <div class="name">Prisma</div>
+        <div class="sub">Agente IA</div>
+      </div>
+    </div>
+
+    <div class="nav-group">
+      <div class="nav-label">Principal</div>
+      <div class="nav-item active" onclick="navTo(this,'painel')" data-view="painel">
+        <svg viewBox="0 0 15 15" fill="none"><rect x="1" y="1" width="5" height="5" rx="1" stroke="currentColor" stroke-width="1.2"/><rect x="9" y="1" width="5" height="5" rx="1" stroke="currentColor" stroke-width="1.2"/><rect x="1" y="9" width="5" height="5" rx="1" stroke="currentColor" stroke-width="1.2"/><rect x="9" y="9" width="5" height="5" rx="1" stroke="currentColor" stroke-width="1.2"/></svg>
+        Painel
+      </div>
+      <div class="nav-item" onclick="navTo(this,'historico')" data-view="historico">
+        <svg viewBox="0 0 15 15" fill="none"><circle cx="7.5" cy="7.5" r="6" stroke="currentColor" stroke-width="1.2"/><path d="M7.5 4v3.5l2.5 1.5" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>
+        Histórico
+      </div>
+    </div>
+
+    <div class="nav-group">
+      <div class="nav-label">Questões</div>
+      <div class="nav-item" onclick="navTo(this,'banco')" data-view="banco">
+        <svg viewBox="0 0 15 15" fill="none"><ellipse cx="7.5" cy="4" rx="5.5" ry="2" stroke="currentColor" stroke-width="1.2"/><path d="M2 4v7c0 1.1 2.46 2 5.5 2s5.5-.9 5.5-2V4" stroke="currentColor" stroke-width="1.2"/><path d="M2 7.5c0 1.1 2.46 2 5.5 2s5.5-.9 5.5-2" stroke="currentColor" stroke-width="1.2"/></svg>
+        Banco de dados
+      </div>
+      <div class="nav-item" onclick="navTo(this,'revisar')" data-view="revisar">
+        <svg viewBox="0 0 15 15" fill="none"><path d="M7.5 1L9.5 5.5H14L10.5 8.5L12 13L7.5 10.5L3 13L4.5 8.5L1 5.5H5.5Z" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round"/></svg>
+        Revisar
+        <span class="nav-badge" id="badge-revisar">3</span>
+      </div>
+    </div>
+
+    <div class="nav-group">
+      <div class="nav-label">Config.</div>
+      <div class="nav-item" onclick="navTo(this,'fontes')" data-view="fontes">
+        <svg viewBox="0 0 15 15" fill="none"><circle cx="7.5" cy="7.5" r="2" stroke="currentColor" stroke-width="1.2"/><path d="M7.5 1v2M7.5 12v2M1 7.5h2M12 7.5h2M3.1 3.1l1.4 1.4M10.5 10.5l1.4 1.4M10.5 3.1l-1.4 1.4M4.5 10.5l-1.4 1.4" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>
+        Fontes
+      </div>
+    </div>
+
+    <div class="sidebar-bottom">
+      <div class="user-card">
+        <div class="user-avatar" id="user-avatar">P</div>
+        <div class="user-info">
+          <div class="uname" id="user-name">—</div>
+          <div class="urole" id="user-role">—</div>
+        </div>
+      </div>
+    </div>
+  </aside>
+
+  <div class="main">
+    <div class="topbar">
+      <div class="topbar-title" id="topbar-title">Painel do agente</div>
+      <div class="status-pill">
+        <span class="dot" id="status-dot"></span>
+        <span id="status-text">Verificando...</span>
+      </div>
+    </div>
+
+    <!-- VIEW: PAINEL -->
+    <div class="content" id="view-painel">
+      <div class="metrics">
+        <div class="metric">
+          <div class="metric-label">Total no banco</div>
+          <div class="metric-value" id="m-total">—</div>
+          <div class="metric-delta">questões cadastradas</div>
+        </div>
+        <div class="metric">
+          <div class="metric-label">Inseridas hoje</div>
+          <div class="metric-value" id="m-hoje">0</div>
+          <div class="metric-delta" id="m-hoje-d">nenhuma ainda</div>
+        </div>
+        <div class="metric">
+          <div class="metric-label">Descartadas</div>
+          <div class="metric-value" id="m-desc">0</div>
+          <div class="metric-delta">duplicatas / inválidas</div>
+        </div>
+        <div class="metric">
+          <div class="metric-label">Última execução</div>
+          <div class="metric-value" style="font-size:15px;padding-top:5px" id="m-ultima">—</div>
+          <div class="metric-delta" id="m-ultima-d">—</div>
+        </div>
+      </div>
+
+      <div class="grid">
+        <!-- COLUNA ESQUERDA -->
+        <div>
+          <div class="card">
+            <div class="card-title">Configurar busca</div>
+            <div class="tabs">
+              <button class="tab active" onclick="switchTab('tematica',this)">Por tema</button>
+              <button class="tab" onclick="switchTab('prova',this)">Por prova completa</button>
+              <button class="tab" onclick="switchTab('auditoria',this)">Auditar base</button>
+            </div>
+
+            <!-- ABA TEMÁTICA -->
+            <div class="tab-panel active" id="panel-tematica">
+              <div class="form-row">
+                <div class="form-group">
+                  <label>Disciplina</label>
+                  <select id="disciplina">
+                    <option>Direito Constitucional</option>
+                    <option>Direito Administrativo</option>
+                    <option>Direito Penal</option>
+                    <option>Português</option>
+                    <option>Raciocínio Lógico</option>
+                    <option>Informática</option>
+                    <option>Administração Pública</option>
+                    <option>Matemática Financeira</option>
+                    <option>Contabilidade</option>
+                  </select>
+                </div>
+                <div class="form-group">
+                  <label>Banca</label>
+                  <select id="banca">
+                    <option>Todas as bancas</option>
+                    <option>CESPE / Cebraspe</option>
+                    <option>FGV</option>
+                    <option>FCC</option>
+                    <option>VUNESP</option>
+                    <option>IBFC</option>
+                    <option>Quadrix</option>
+                    <option>AOCP</option>
+                    <option>CONSULPLAN</option>
+                  </select>
+                </div>
+              </div>
+              <div class="form-row">
+                <div class="form-group">
+                  <label>Ano inicial</label>
+                  <input type="number" id="ano-ini" value="2018" min="2000" max="2025"/>
+                </div>
+                <div class="form-group">
+                  <label>Limite de questões</label>
+                  <input type="number" id="limite" value="200" min="10" max="1000"/>
+                </div>
+              </div>
+              <div class="section-lbl">Nível do cargo</div>
+              <div class="tags">
+                <span class="tag active" onclick="this.classList.toggle('active')">Fundamental</span>
+                <span class="tag active" onclick="this.classList.toggle('active')">Médio</span>
+                <span class="tag active" onclick="this.classList.toggle('active')">Superior</span>
+                <span class="tag" onclick="this.classList.toggle('active')">Policial / Militar</span>
+                <span class="tag" onclick="this.classList.toggle('active')">Fiscal / Auditoria</span>
+              </div>
+              <div class="section-lbl">Fontes ativas</div>
+              <div class="sources">
+                <label class="source-item"><input type="checkbox" checked> PCI Concursos</label>
+                <label class="source-item"><input type="checkbox" checked> CESPE oficial</label>
+                <label class="source-item"><input type="checkbox" checked> FGV Projetos</label>
+                <label class="source-item"><input type="checkbox"> Diário Oficial (PDF)</label>
+                <label class="source-item"><input type="checkbox" checked> VUNESP</label>
+                <label class="source-item"><input type="checkbox"> FCC</label>
+              </div>
+              <button class="btn btn-primary" id="btn-tematica" onclick="iniciar('tematica')">
+                <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><polygon points="3,1 13,7 3,13" fill="white"/></svg>
+                Iniciar busca temática
+              </button>
+            </div>
+
+            <!-- ABA PROVA -->
+            <div class="tab-panel" id="panel-prova">
+              <div class="form-row-4">
+                <div class="form-group">
+                  <label>Banca</label>
+                  <select id="p-banca">
+                    <option>CESPE</option><option>FGV</option><option>FCC</option>
+                    <option>VUNESP</option><option>IBFC</option><option>Quadrix</option>
+                  </select>
+                </div>
+                <div class="form-group">
+                  <label>Órgão</label>
+                  <input type="text" id="p-orgao" placeholder="Ex: TRF 1ª Região"/>
+                </div>
+                <div class="form-group">
+                  <label>Cargo</label>
+                  <input type="text" id="p-cargo" placeholder="Ex: Analista Judiciário"/>
+                </div>
+                <div class="form-group">
+                  <label>Ano</label>
+                  <input type="number" id="p-ano" value="2023" min="2000" max="2025"/>
+                </div>
+              </div>
+              <button class="btn btn-secondary" style="margin-bottom:12px" onclick="addProva()">
+                <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><line x1="6" y1="1" x2="6" y2="11" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><line x1="1" y1="6" x2="11" y2="6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+                Adicionar à fila
+              </button>
+              <div class="section-lbl">Fila de provas</div>
+              <div id="prova-queue">
+                <div class="empty-q" id="empty-prova">Nenhuma prova na fila. Preencha e adicione acima.</div>
+              </div>
+              <button class="btn btn-primary" id="btn-prova" onclick="iniciar('prova')" disabled>
+                <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><polygon points="3,1 13,7 3,13" fill="white"/></svg>
+                Processar fila de provas
+              </button>
+            </div>
+
+            <!-- ABA AUDITORIA -->
+            <div class="tab-panel" id="panel-auditoria">
+              <div class="form-row">
+                <div class="form-group">
+                  <label>Verificar</label>
+                  <select>
+                    <option>Todas as questões</option>
+                    <option>Últimas 500 inseridas</option>
+                    <option>Por disciplina</option>
+                    <option>Com gabarito suspeito</option>
+                  </select>
+                </div>
+                <div class="form-group">
+                  <label>Ação ao encontrar erro</label>
+                  <select>
+                    <option>Corrigir automaticamente</option>
+                    <option>Sinalizar para revisão</option>
+                    <option>Apenas relatório</option>
+                  </select>
+                </div>
+              </div>
+              <div class="section-lbl">Verificar</div>
+              <div class="tags" style="margin-bottom:14px">
+                <span class="tag active" onclick="this.classList.toggle('active')">Gabarito</span>
+                <span class="tag active" onclick="this.classList.toggle('active')">Formatação</span>
+                <span class="tag active" onclick="this.classList.toggle('active')">Duplicatas</span>
+                <span class="tag" onclick="this.classList.toggle('active')">Encoding</span>
+                <span class="tag" onclick="this.classList.toggle('active')">Classificação</span>
+              </div>
+              <button class="btn btn-teal" id="btn-audit" onclick="iniciar('auditoria')">
+                <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><circle cx="7" cy="7" r="5.5" stroke="currentColor" stroke-width="1.2"/><path d="M4.5 7l2 2 3-3" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                Iniciar auditoria da base
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- COLUNA DIREITA -->
+        <div style="display:flex;flex-direction:column;gap:16px">
+          <div class="card">
+            <div class="card-title">Progresso</div>
+            <div class="progress-label">
+              <span id="prog-label">Aguardando início</span>
+              <span id="prog-pct">0%</span>
+            </div>
+            <div class="progress-bar">
+              <div class="progress-fill" id="prog-fill" style="width:0%"></div>
+            </div>
+            <div class="log" id="log">
+              <div class="log-line"><span class="log-time">--:--:--</span><span>Agente pronto. Configure e inicie.</span></div>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="card-title">Sinalizadas para revisão</div>
+            <div class="audit-item">
+              <span class="abadge abadge-err">Gabarito</span>
+              <div>
+                <div class="atext">Questão #4821 — CESPE 2022</div>
+                <div class="asub">Alternativa correta ausente</div>
+              </div>
+            </div>
+            <div class="audit-item">
+              <span class="abadge abadge-warn">Duplicata</span>
+              <div>
+                <div class="atext">Questão #3902 ≈ #4105</div>
+                <div class="asub">92% de similaridade detectada</div>
+              </div>
+            </div>
+            <div class="audit-item">
+              <span class="abadge abadge-warn">Encoding</span>
+              <div>
+                <div class="atext">Questão #5217 — FGV 2021</div>
+                <div class="asub">Caracteres corrompidos no enunciado</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- VIEW: OUTRAS (placeholder) -->
+    <div class="content" id="view-historico" style="display:none">
+      <div class="card" style="max-width:500px">
+        <div class="card-title">Histórico de execuções</div>
+        <p style="color:var(--text3);font-size:13px">Disponível após a primeira execução do agente.</p>
+      </div>
+    </div>
+    <div class="content" id="view-banco" style="display:none">
+      <div class="card" style="max-width:500px">
+        <div class="card-title">Banco de dados</div>
+        <p style="color:var(--text3);font-size:13px">Métricas detalhadas disponíveis em breve.</p>
+      </div>
+    </div>
+    <div class="content" id="view-revisar" style="display:none">
+      <div class="card" style="max-width:500px">
+        <div class="card-title">Questões para revisão humana</div>
+        <p style="color:var(--text3);font-size:13px">As questões sinalizadas pela auditoria aparecerão aqui.</p>
+      </div>
+    </div>
+    <div class="content" id="view-fontes" style="display:none">
+      <div class="card" style="max-width:500px">
+        <div class="card-title">Configuração de fontes</div>
+        <p style="color:var(--text3);font-size:13px">Gerencie os sites-fonte do agente aqui.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const API = window.PRISMA_API_URL || 'http://localhost:8000'
+let usuario = null
+let provas = []
+let running = false
+let step = 0
+
+// ── LOGIN ──────────────────────────────────────
+async function fazerLogin() {
+  const login = document.getElementById('l-login').value.trim()
+  const senha = document.getElementById('l-senha').value
+  const err   = document.getElementById('l-err')
+  err.style.display = 'none'
+
+  try {
+    const res = await fetch(`${API}/auth/login`, {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({login, senha})
+    })
+    if (!res.ok) { err.style.display = 'block'; return }
+    const data = await res.json()
+    usuario = data.usuario
+    document.getElementById('login-screen').style.display = 'none'
+    document.getElementById('app').style.display = 'flex'
+    document.getElementById('user-name').textContent = usuario.nome || usuario.login
+    document.getElementById('user-role').textContent = usuario.cargo || 'Administrador'
+    document.getElementById('user-avatar').textContent = (usuario.nome || 'P')[0].toUpperCase()
+    carregarMetricas()
+    verificarStatus()
+  } catch(e) {
+    err.textContent = 'Erro de conexão com o servidor.'
+    err.style.display = 'block'
+  }
+}
+
+document.getElementById('l-senha').addEventListener('keydown', e => {
+  if (e.key === 'Enter') fazerLogin()
+})
+
+// ── STATUS ────────────────────────────────────
+async function verificarStatus() {
+  try {
+    const res = await fetch(`${API}/status`)
+    const data = await res.json()
+    const dot  = document.getElementById('status-dot')
+    const txt  = document.getElementById('status-text')
+    if (data.banco === 'conectado') {
+      dot.className = 'dot online'
+      txt.textContent = 'Banco conectado'
+    } else {
+      dot.className = 'dot'
+      txt.textContent = 'Banco desconectado'
+    }
+  } catch(e) {
+    document.getElementById('status-text').textContent = 'API offline'
+  }
+}
+
+// ── MÉTRICAS ─────────────────────────────────
+async function carregarMetricas() {
+  try {
+    const res = await fetch(`${API}/agente/metricas`)
+    const d = await res.json()
+    document.getElementById('m-total').textContent = (d.total_questoes||0).toLocaleString('pt-BR')
+    document.getElementById('m-hoje').textContent = d.inseridas_hoje || 0
+    if (d.inseridas_hoje > 0) {
+      document.getElementById('m-hoje-d').textContent = `+${d.inseridas_hoje} hoje`
+      document.getElementById('m-hoje-d').classList.add('up')
+    }
+  } catch(e) {}
+}
+
+// ── NAV ───────────────────────────────────────
+const titles = {
+  painel:'Painel do agente', historico:'Histórico de execuções',
+  banco:'Banco de dados', revisar:'Questões para revisão', fontes:'Configuração de fontes'
+}
+function navTo(el, view) {
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'))
+  document.querySelectorAll('.content').forEach(c => c.style.display = 'none')
+  el.classList.add('active')
+  document.getElementById('view-'+view).style.display = 'block'
+  document.getElementById('topbar-title').textContent = titles[view] || ''
+}
+
+// ── TABS ──────────────────────────────────────
+function switchTab(name, el) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'))
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'))
+  el.classList.add('active')
+  document.getElementById('panel-'+name).classList.add('active')
+}
+
+// ── FILA DE PROVAS ────────────────────────────
+function addProva() {
+  const orgao = document.getElementById('p-orgao').value.trim()
+  const cargo = document.getElementById('p-cargo').value.trim()
+  if (!orgao || !cargo) return
+  const banca = document.getElementById('p-banca').value
+  const ano   = document.getElementById('p-ano').value
+  provas.push({id: Date.now(), banca, orgao, cargo, ano})
+  renderFila()
+  document.getElementById('p-orgao').value = ''
+  document.getElementById('p-cargo').value = ''
+}
+function remProva(id) {
+  provas = provas.filter(p => p.id !== id)
+  renderFila()
+}
+function renderFila() {
+  const c = document.getElementById('prova-queue')
+  if (!provas.length) {
+    c.innerHTML = '<div class="empty-q" id="empty-prova">Nenhuma prova na fila.</div>'
+    document.getElementById('btn-prova').disabled = true
+    return
+  }
+  c.innerHTML = ''
+  provas.forEach(p => {
+    const d = document.createElement('div')
+    d.className = 'queue-item'
+    d.innerHTML = `<div><div class="qi-title">${p.orgao} — ${p.cargo}</div><div class="qi-sub">${p.banca} · ${p.ano}</div></div><button class="qi-rm" onclick="remProva(${p.id})">×</button>`
+    c.appendChild(d)
+  })
+  document.getElementById('btn-prova').disabled = false
+}
+
+// ── LOG ───────────────────────────────────────
+function now() { return new Date().toTimeString().slice(0,8) }
+function addLog(tipo, msg) {
+  const log  = document.getElementById('log')
+  const line = document.createElement('div')
+  line.className = 'log-line'
+  line.innerHTML = `<span class="log-time">${now()}</span><span class="log-${tipo}">${msg}</span>`
+  log.appendChild(line)
+  log.scrollTop = log.scrollHeight
+}
+
+// ── STEPS SIMULADOS (até a API estar ao vivo) ──
+const stepSets = {
+  tematica: [
+    {pct:8,  t:'info', m:'Conectando ao banco MySQL da Locaweb...'},
+    {pct:16, t:'ok',   m:'Conexão estabelecida com sucesso.'},
+    {pct:26, t:'info', m:'Buscando questões em PCI Concursos...'},
+    {pct:38, t:'ok',   m:'47 questões encontradas — PCI Concursos.'},
+    {pct:48, t:'info', m:'Buscando questões no CESPE oficial...'},
+    {pct:60, t:'ok',   m:'83 questões encontradas — CESPE/Cebraspe.'},
+    {pct:70, t:'info', m:'Validando com IA (duplicatas e qualidade)...'},
+    {pct:80, t:'ok',   m:'12 questões descartadas (duplicatas).'},
+    {pct:90, t:'info', m:'Inserindo no banco de dados...'},
+    {pct:100,t:'ok',   m:'179 questões inseridas com sucesso.'},
+  ],
+  prova: [
+    {pct:8,  t:'info', m:'Conectando ao banco MySQL...'},
+    {pct:16, t:'ok',   m:'Conexão OK.'},
+    {pct:30, t:'info', m:'Localizando PDF da prova...'},
+    {pct:50, t:'ok',   m:'PDF encontrado. Extraindo questões...'},
+    {pct:68, t:'info', m:'Validando com IA...'},
+    {pct:82, t:'ok',   m:'3 questões descartadas.'},
+    {pct:93, t:'info', m:'Inserindo no banco...'},
+    {pct:100,t:'ok',   m:'54 questões inseridas com sucesso.'},
+  ],
+  auditoria: [
+    {pct:10, t:'info', m:'Lendo questões do banco...'},
+    {pct:25, t:'ok',   m:'8.214 questões carregadas.'},
+    {pct:40, t:'info', m:'Verificando gabaritos...'},
+    {pct:55, t:'ok',   m:'1 gabarito corrigido automaticamente.'},
+    {pct:68, t:'info', m:'Detectando duplicatas...'},
+    {pct:78, t:'ok',   m:'2 pares suspeitos sinalizados.'},
+    {pct:88, t:'info', m:'Verificando encoding...'},
+    {pct:95, t:'ok',   m:'4 questões com encoding corrigido.'},
+    {pct:100,t:'ok',   m:'Auditoria concluída. 3 questões para revisão humana.'},
+  ]
+}
+
+async function iniciar(mode) {
+  if (running) return
+  running = true
+  step = 0
+
+  ;['btn-tematica','btn-prova','btn-audit'].forEach(id => {
+    const b = document.getElementById(id)
+    if (b) b.disabled = true
+  })
+
+  const dot = document.getElementById('status-dot')
+  const txt = document.getElementById('status-text')
+  dot.className = 'dot running'
+  txt.textContent = 'Executando...'
+
+  document.getElementById('log').innerHTML = ''
+  document.getElementById('prog-fill').style.width = '0%'
+  document.getElementById('prog-pct').textContent = '0%'
+  document.getElementById('prog-label').textContent = 'Iniciando...'
+
+  const steps = stepSets[mode] || stepSets.tematica
+
+  function tick() {
+    if (step >= steps.length) {
+      running = false
+      dot.className = 'dot online'
+      txt.textContent = 'Concluído'
+      document.getElementById('btn-tematica').disabled = false
+      document.getElementById('btn-audit').disabled = false
+      if (provas.length) document.getElementById('btn-prova').disabled = false
+
+      const agora = new Date()
+      document.getElementById('m-ultima').textContent = agora.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'})
+      document.getElementById('m-ultima-d').textContent = agora.toLocaleDateString('pt-BR')
+
+      if (mode === 'tematica') {
+        document.getElementById('m-hoje').textContent = 179
+        document.getElementById('m-hoje-d').textContent = '+179 nesta execução'
+        document.getElementById('m-hoje-d').classList.add('up')
+        document.getElementById('m-desc').textContent = 12
+        document.getElementById('m-total').textContent = (8214+179).toLocaleString('pt-BR')
+      }
+      if (mode === 'prova') {
+        document.getElementById('m-hoje').textContent = 54
+        document.getElementById('m-hoje-d').textContent = '+54 nesta execução'
+        document.getElementById('m-hoje-d').classList.add('up')
+        document.getElementById('m-desc').textContent = 3
+      }
+      return
+    }
+    const s = steps[step]
+    document.getElementById('prog-fill').style.width = s.pct + '%'
+    document.getElementById('prog-pct').textContent = s.pct + '%'
+    document.getElementById('prog-label').textContent = s.pct < 100 ? 'Processando...' : 'Finalizado'
+    addLog(s.t, s.m)
+    step++
+    setTimeout(tick, 500 + Math.random() * 600)
+  }
+  tick()
+}
+</script>
+</body>
+</html>
