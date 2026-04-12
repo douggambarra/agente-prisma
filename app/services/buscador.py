@@ -337,8 +337,17 @@ def processar_busca(
     def warn(msg): log.append({"tipo": "warn", "msg": msg})
     def err(msg):  log.append({"tipo": "err",  "msg": msg})
 
+    def get_conn():
+        """Retorna conexão fresca — reconecta se necessário."""
+        try:
+            c = get_connection()
+            c.ping(reconnect=True)
+            return c
+        except Exception as e:
+            raise Exception(f"Falha ao conectar ao banco: {e}")
+
     info("Conectando ao banco...")
-    conn = get_connection()
+    conn = get_conn()
     ok("Conexão estabelecida.")
 
     # 1. Claude interpreta o comando e gera queries
@@ -408,6 +417,12 @@ def processar_busca(
                 descartadas += 1
                 warn(f"Duplicata: {pergunta_txt[:50]}...")
                 continue
+
+            # Reconecta antes de inserir (evita timeout após busca longa)
+            try:
+                conn.ping(reconnect=True)
+            except Exception:
+                conn = get_conn()
 
             # Insere pergunta
             id_pergunta = inserir_pergunta(conn, id_usuario, q)
