@@ -1616,8 +1616,8 @@ async function pdfProcessar() {
 }
 
 async function pdfPolling(jobId) {
-  for (let i = 0; i < 90; i++) {
-    await sleep(2000)
+  for (let i = 0; i < 180; i++) {
+    await sleep(3000)
     try {
       const res = await fetch(`${API}/upload-prova/job/${jobId}`)
       const data = await res.json()
