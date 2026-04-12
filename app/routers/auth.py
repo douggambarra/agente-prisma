@@ -9,15 +9,17 @@ class LoginRequest(BaseModel):
     login: str
     senha: str
 
-def sha1(texto: str) -> str:
-    return hashlib.sha1(texto.encode("utf-8")).hexdigest()
+def hash_senha(texto: str) -> str:
+    md5 = hashlib.md5(texto.encode("utf-8")).hexdigest()
+    sha1 = hashlib.sha1(md5.encode("utf-8")).hexdigest()
+    return sha1
 
 @router.post("/login")
 def login(data: LoginRequest):
     conn = get_connection()
     cursor = conn.cursor(dictionary=True)
     try:
-        senha_hash = sha1(data.senha)
+        senha_hash = hash_senha(data.senha)
         cursor.execute(
             "SELECT id, nome, email, cargo FROM usuario WHERE login = %s AND senha = %s",
             (data.login, senha_hash)
