@@ -62,13 +62,30 @@ def inserir_questao(conn, id_usuario: int, questao: dict) -> int:
     finally:
         cursor.close()
 
-def vincular_assunto(conn, id_usuario: int, id_pergunta: int, id_assunto: int):
+def vincular_assuntos(conn, id_usuario: int, id_pergunta: int, ids_assunto: list):
+    """
+    Vincula a pergunta a TODOS os assuntos selecionados (matéria, banca, região, ano, etc.)
+    seguindo a mesma hierarquia do BD — cada id é um nó folha da árvore de assunto.
+    """
+    if not ids_assunto:
+        return
     cursor = conn.cursor()
     try:
-        cursor.execute("""
-            INSERT INTO vinculo_assunto_pergunta (id_usuario, id_assunto, id_pergunta)
-            VALUES (%s, %s, %s)
-        """, (id_usuario, id_assunto, id_pergunta))
+        for id_assunto in ids_assunto:
+            if not id_assunto:
+                continue
+            # Evita duplicata de vínculo
+            cursor.execute("""
+                SELECT id FROM vinculo_assunto_pergunta
+                WHERE id_pergunta = %s AND id_assunto = %s
+                LIMIT 1
+            """, (id_pergunta, id_assunto))
+            if cursor.fetchone():
+                continue
+            cursor.execute("""
+                INSERT INTO vinculo_assunto_pergunta (id_usuario, id_assunto, id_pergunta)
+                VALUES (%s, %s, %s)
+            """, (id_usuario, id_assunto, id_pergunta))
         conn.commit()
     finally:
         cursor.close()
@@ -117,11 +134,13 @@ def processar_busca(
     banca: str,
     ano_ini: int,
     limite: int,
-    id_assunto: int = None
+    ids_assunto: list = None   # lista com todos os IDs de assunto selecionados
 ) -> dict:
     log = []
     inseridas = 0
     descartadas = 0
+
+    ids_assunto = ids_assunto or []
 
     log.append({"tipo": "info", "msg": "Conectando ao banco MySQL..."})
     conn = get_connection()
@@ -145,8 +164,9 @@ def processar_busca(
                 continue
 
             id_pergunta = inserir_questao(conn, id_usuario, q)
-            if id_assunto:
-                vincular_assunto(conn, id_usuario, id_pergunta, id_assunto)
+
+            # Vincula TODOS os assuntos selecionados (matéria, banca, região, ano, etc.)
+            vincular_assuntos(conn, id_usuario, id_pergunta, ids_assunto)
 
             inseridas += 1
             log.append({"tipo": "ok", "msg": f"Inserida: {q['nome'][:60]}"})

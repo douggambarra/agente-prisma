@@ -1,6 +1,6 @@
 from fastapi import APIRouter, BackgroundTasks, HTTPException
 from pydantic import BaseModel
-from typing import Optional
+from typing import Optional, List
 from app.services.buscador import processar_busca
 from app.database import get_connection
 
@@ -10,11 +10,12 @@ jobs = {}
 
 class BuscaTematicaRequest(BaseModel):
     id_usuario: int
-    disciplina: str
+    disciplina: str = "Todas"
     banca: str = "Todas"
     ano_ini: int = 2018
     limite: int = 200
     id_assunto: Optional[int] = None
+    ids_assunto: Optional[List[int]] = None   # todos os filtros selecionados
 
 class ProvaRequest(BaseModel):
     id_usuario: int
@@ -33,6 +34,7 @@ def executar_busca_bg(job_id: str, params: dict):
         resultado = processar_busca(**params)
         jobs[job_id]["status"] = "concluido"
         jobs[job_id]["resultado"] = resultado
+        jobs[job_id]["log"] = resultado.get("log", [])
     except Exception as e:
         jobs[job_id]["status"] = "erro"
         jobs[job_id]["erro"] = str(e)
@@ -41,7 +43,10 @@ def executar_busca_bg(job_id: str, params: dict):
 def busca_tematica(data: BuscaTematicaRequest, background_tasks: BackgroundTasks):
     import uuid
     job_id = str(uuid.uuid4())[:8]
-    jobs[job_id] = {"status": "aguardando", "resultado": None}
+    jobs[job_id] = {"status": "aguardando", "resultado": None, "log": []}
+
+    # Consolida ids_assunto: usa lista se fornecida, senão usa id_assunto simples
+    ids_assunto = data.ids_assunto or ([data.id_assunto] if data.id_assunto else [])
 
     params = {
         "id_usuario": data.id_usuario,
@@ -49,7 +54,7 @@ def busca_tematica(data: BuscaTematicaRequest, background_tasks: BackgroundTasks
         "banca": data.banca,
         "ano_ini": data.ano_ini,
         "limite": data.limite,
-        "id_assunto": data.id_assunto,
+        "ids_assunto": ids_assunto,
     }
     background_tasks.add_task(executar_busca_bg, job_id, params)
     return {"job_id": job_id, "status": "iniciado"}
@@ -74,9 +79,7 @@ def metricas():
         """)
         hoje = cursor.fetchone()["hoje"]
 
-        cursor.execute("""
-            SELECT COUNT(*) as total FROM prova
-        """)
+        cursor.execute("SELECT COUNT(*) as total FROM prova")
         provas = cursor.fetchone()["total"]
 
         cursor.execute("""
