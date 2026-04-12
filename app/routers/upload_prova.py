@@ -106,4 +106,7 @@ def confirmar_salvamento(data: ConfirmarSalvamentoRequest):
         jobs[data.job_id]["status"] = "salvo"
         return resultado
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        import traceback
+        erro_completo = traceback.format_exc()
+        print("ERRO CONFIRMAR:", erro_completo)
+        raise HTTPException(status_code=500, detail=erro_completo)

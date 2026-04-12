@@ -241,18 +241,18 @@ def salvar_prova_completa(id_usuario: int, dados_prova: dict, questoes: list) ->
 
 
 def _inserir_prova(conn, id_usuario: int, dados: dict) -> int:
-    """
-    Insere a prova. A tabela prova usa: id_orgao, nome, url, banca, banca_link,
-    data_da_prova, finalizada, corrigida, etc.
-    Campos não obrigatórios ficam com valor padrão do banco.
-    """
     cursor = conn.cursor()
     try:
-        nome        = encode_latin1(dados.get("nome", ""))
-        banca       = encode_latin1(dados.get("banca", ""))
-        data_prova  = dados.get("data_da_prova", "") or None
-        id_orgao    = dados.get("id_orgao") or None
-        url         = gerar_url(nome)
+        nome       = encode_latin1(dados.get("nome", "") or "")
+        banca      = encode_latin1(dados.get("banca", "") or "")
+        data_prova = dados.get("data_da_prova") or None
+        # data_da_prova precisa ser NULL ou formato YYYY-MM-DD
+        if data_prova and len(data_prova) < 8:
+            data_prova = None
+        id_orgao   = dados.get("id_orgao") or None
+        url        = gerar_url(nome)
+
+        print(f"INSERT prova: nome={nome!r} banca={banca!r} data={data_prova!r} id_orgao={id_orgao!r} id_usuario={id_usuario!r}")
 
         cursor.execute("""
             INSERT INTO prova (nome, url, banca, data_da_prova, id_orgao, id_usuario)
@@ -260,7 +260,13 @@ def _inserir_prova(conn, id_usuario: int, dados: dict) -> int:
         """, (nome, url, banca, data_prova, id_orgao, id_usuario))
 
         conn.commit()
-        return conn.insert_id()
+        id_inserido = conn.insert_id()
+        print(f"Prova inserida id={id_inserido}")
+        return id_inserido
+    except Exception as e:
+        import traceback
+        print("ERRO _inserir_prova:", traceback.format_exc())
+        raise
     finally:
         cursor.close()
 
