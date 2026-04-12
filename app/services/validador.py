@@ -1,8 +1,5 @@
-import anthropic
 import os
 import json
-
-client = anthropic.Anthropic(api_key=os.getenv("ANTHROPIC_API_KEY", ""))
 
 PROMPT_VALIDACAO = """Você é um validador de questões de concurso público brasileiro.
 
@@ -28,12 +25,16 @@ def validar_questao(questao: dict) -> tuple[bool, str]:
     texto = questao.get("pergunta", "") or questao.get("enunciado", "")
     if not texto or len(texto.strip()) < 30:
         return False, "texto muito curto"
-    try:
-        if not os.getenv("ANTHROPIC_API_KEY"):
-            return validar_heuristico(questao)
 
+    api_key = os.getenv("ANTHROPIC_API_KEY", "")
+    if not api_key:
+        return validar_heuristico(questao)
+
+    try:
+        import anthropic
+        client = anthropic.Anthropic(api_key=api_key)
         msg = client.messages.create(
-            model="claude-sonnet-4-20250514",
+            model="claude-haiku-4-5-20251001",
             max_tokens=200,
             messages=[{
                 "role": "user",
@@ -44,7 +45,7 @@ def validar_questao(questao: dict) -> tuple[bool, str]:
         resposta = resposta.replace("```json", "").replace("```", "").strip()
         dados = json.loads(resposta)
         return dados.get("valida", False), dados.get("motivo", "")
-    except Exception as e:
+    except Exception:
         return validar_heuristico(questao)
 
 def validar_heuristico(questao: dict) -> tuple[bool, str]:
