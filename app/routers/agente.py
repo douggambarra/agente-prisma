@@ -190,3 +190,30 @@ def questoes_inseridas(limite: int = 500):
     finally:
         cursor.close()
         conn.close()
+
+@router.get("/testar-busca")
+def testar_busca():
+    """Testa se a Google Custom Search API está funcionando."""
+    import requests, os
+    api_key = os.getenv("GOOGLE_API_KEY", "")
+    cx      = os.getenv("GOOGLE_CX", "")
+    if not api_key or not cx:
+        return {"ok": False, "erro": "Variáveis GOOGLE_API_KEY ou GOOGLE_CX não configuradas"}
+    try:
+        resp = requests.get(
+            "https://www.googleapis.com/customsearch/v1",
+            params={"key": api_key, "cx": cx, "q": "questões concurso público", "num": 1},
+            timeout=10
+        )
+        data = resp.json()
+        if not resp.ok:
+            return {"ok": False, "status": resp.status_code, "erro": data.get("error", {}).get("message", str(data))}
+        items = data.get("items", [])
+        return {
+            "ok": True,
+            "status": resp.status_code,
+            "total_results": data.get("searchInformation", {}).get("totalResults"),
+            "primeiro_resultado": items[0].get("link") if items else None
+        }
+    except Exception as e:
+        return {"ok": False, "erro": str(e)}

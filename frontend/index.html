@@ -1287,7 +1287,12 @@ async function monitorarJob(jobId) {
       const res = await fetch(`${API}/agente/job/${jobId}`)
       const data = await res.json()
       if (data.log) {
-        data.log.slice(-3).forEach(l => addLog(l.tipo === 'ok' ? 'ok' : l.tipo === 'err' ? 'err' : 'info', l.msg))
+        // Mostra todos os logs novos (evita repetir os já exibidos)
+        const jaExibidos = document.getElementById('log').children.length - 1
+        data.log.slice(jaExibidos).forEach(l => {
+          const tipo = l.tipo === 'ok' ? 'ok' : l.tipo === 'err' ? 'err' : l.tipo === 'warn' ? 'warn' : 'info'
+          addLog(tipo, l.msg)
+        })
       }
       if (data.status === 'concluido') {
         document.getElementById('prog-fill').style.width = '100%'
