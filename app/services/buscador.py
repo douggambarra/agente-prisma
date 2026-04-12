@@ -411,6 +411,10 @@ def processar_busca(
 
     ok(f"Total coletado: {len(todas_questoes)} questões brutas.")
 
+    # fecha conexão usada na busca — cada inserção abre a sua própria
+    try: conn.close()
+    except: pass
+
     # 3. Filtra, valida e insere
     for q in todas_questoes:
         if inseridas >= limite:
@@ -427,34 +431,29 @@ def processar_busca(
                 warn(f"Sem alternativas: {pergunta_txt[:50]}...")
                 continue
 
-            if questao_duplicada(conn, pergunta_txt):
-                descartadas += 1
-                warn(f"Duplicata: {pergunta_txt[:50]}...")
-                continue
+            # Abre conexão fresca para cada questão
+            conn_ins = get_connection()
 
-            # Reconecta antes de inserir (evita timeout após busca longa)
             try:
-                conn.ping(reconnect=True)
-            except Exception:
-                conn = get_conn()
+                if questao_duplicada(conn_ins, pergunta_txt):
+                    descartadas += 1
+                    warn(f"Duplicata: {pergunta_txt[:50]}...")
+                    conn_ins.close()
+                    continue
 
-            # Insere pergunta
-            id_pergunta = inserir_pergunta(conn, id_usuario, q)
-
-            # Insere respostas
-            inserir_respostas(conn, id_pergunta, q.get("alternativas", []))
-
-            # Vincula assuntos (um por raiz, como o gerenciador)
-            vincular_assuntos(conn, id_usuario, id_pergunta, ids_assunto)
-
-            inseridas += 1
-            ok(f"Inserida #{id_pergunta}: {pergunta_txt[:60]}...")
+                id_pergunta = inserir_pergunta(conn_ins, id_usuario, q)
+                inserir_respostas(conn_ins, id_pergunta, q.get("alternativas", []))
+                vincular_assuntos(conn_ins, id_usuario, id_pergunta, ids_assunto)
+                inseridas += 1
+                ok(f"Inserida #{id_pergunta}: {pergunta_txt[:60]}...")
+            finally:
+                try: conn_ins.close()
+                except: pass
 
         except Exception as e:
             descartadas += 1
             err(f"Erro: {str(e)[:80]}")
 
-    conn.close()
     ok(f"Concluído. {inseridas} inseridas, {descartadas} descartadas.")
 
     return {"inseridas": inseridas, "descartadas": descartadas, "log": log}

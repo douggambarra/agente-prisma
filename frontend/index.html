@@ -90,7 +90,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'DM San
 .btn-secondary:disabled{border-color:var(--border);color:var(--text3);cursor:not-allowed}
 .btn-teal{background:var(--teal-bg);color:var(--teal);border:1px solid #1a4d3a}
 .btn-teal:hover{background:#122e22}
-.log{background:var(--bg);border:1px solid var(--border);border-radius:var(--radius);padding:12px;font-family:monospace;font-size:11px;color:var(--text2);line-height:1.9;max-height:160px;overflow-y:auto}
+.log{background:var(--bg);border:1px solid var(--border);border-radius:var(--radius);padding:12px;font-family:monospace;font-size:11px;color:var(--text2);line-height:1.9;max-height:420px;overflow-y:auto}
 .log::-webkit-scrollbar{width:3px}
 .log::-webkit-scrollbar-thumb{background:var(--border2)}
 .log-line{display:flex;gap:10px}
@@ -517,10 +517,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'DM San
             <div class="progress-bar"><div class="progress-fill" id="prog-fill" style="width:0%"></div></div>
             <div class="log" id="log"><div class="log-line"><span class="log-time">--:--:--</span><span>Agente pronto.</span></div></div>
           </div>
-          <div class="card">
-            <div class="card-title">Sinalizadas para revisão</div>
-            <div id="audit-preview"><div class="empty-state">Rode a auditoria para ver questões sinalizadas.</div></div>
-          </div>
+
         </div>
       </div>
     </div>
