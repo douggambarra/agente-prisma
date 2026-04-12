@@ -181,6 +181,49 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'DM San
 .cselect-empty{padding:16px;text-align:center;font-size:12px;color:var(--text3)}
 .cselect-item.hidden{display:none}
 
+/* ── BUSCA LIVRE ── */
+.busca-livre-wrap{display:flex;flex-direction:column;gap:10px;margin-bottom:14px}
+.busca-livre-textarea{
+  width:100%;background:var(--bg3);border:1px solid var(--border);
+  border-radius:var(--radius);padding:12px 14px;font-size:13px;
+  color:var(--text);font-family:'DM Sans',sans-serif;outline:none;
+  transition:border-color 0.15s;resize:vertical;min-height:72px;line-height:1.6;
+}
+.busca-livre-textarea:focus{border-color:var(--purple2)}
+.busca-livre-textarea::placeholder{color:var(--text3)}
+.busca-livre-hints{display:flex;flex-wrap:wrap;gap:6px}
+
+/* ── LISTAGEM DE QUESTÕES DO AGENTE ── */
+.ql-toolbar{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:14px;flex-wrap:wrap}
+.ql-search{flex:1;min-width:160px;background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius);padding:7px 10px;font-size:12px;color:var(--text);font-family:'DM Sans',sans-serif;outline:none}
+.ql-search:focus{border-color:var(--purple2)}
+.ql-count{font-size:11px;color:var(--text3);white-space:nowrap}
+.ql-table{width:100%;border-collapse:collapse}
+.ql-table th{font-size:10px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:0.06em;padding:8px 12px;border-bottom:1px solid var(--border);text-align:left;white-space:nowrap}
+.ql-table td{padding:10px 12px;border-bottom:1px solid var(--border);font-size:12px;color:var(--text2);vertical-align:middle}
+.ql-table tr:last-child td{border-bottom:none}
+.ql-table tr:hover td{background:rgba(255,255,255,0.02);color:var(--text)}
+.ql-id{font-family:'Syne',sans-serif;font-size:11px;color:var(--text3);white-space:nowrap}
+.ql-trecho{max-width:380px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ql-data{white-space:nowrap;font-size:11px;color:var(--text3)}
+.ql-badge{font-size:10px;font-weight:600;padding:2px 8px;border-radius:20px;white-space:nowrap}
+.ql-badge-ok{background:var(--teal-bg);color:var(--teal)}
+.ql-badge-pend{background:var(--amber-bg);color:var(--amber)}
+.ql-link{color:var(--purple);text-decoration:none;font-size:11px;opacity:0.8;transition:opacity 0.15s;white-space:nowrap}
+.ql-link:hover{opacity:1}
+.ql-pagination{display:flex;align-items:center;justify-content:space-between;margin-top:14px;flex-wrap:wrap;gap:8px}
+.ql-page-info{font-size:11px;color:var(--text3)}
+.ql-page-btns{display:flex;gap:6px}
+.ql-page-btn{background:var(--bg3);border:1px solid var(--border);border-radius:6px;padding:5px 12px;font-size:12px;color:var(--text2);cursor:pointer;transition:all 0.15s}
+.ql-page-btn:hover:not(:disabled){border-color:var(--purple2);color:var(--text)}
+.ql-page-btn:disabled{opacity:0.3;cursor:not-allowed}
+.ql-assuntos{display:flex;flex-wrap:wrap;gap:4px;max-width:220px}
+.ql-assunto-tag{font-size:10px;padding:1px 7px;border-radius:20px;background:var(--purple-bg);color:var(--purple);border:1px solid var(--purple3);white-space:nowrap}
+.busca-hint{font-size:11px;padding:4px 10px;border-radius:20px;border:1px solid var(--border2);
+  color:var(--text3);cursor:pointer;background:transparent;transition:all 0.15s}
+.busca-hint:hover{border-color:var(--purple2);color:var(--text)}
+.limite-row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+
 /* ── FILTROS DINÂMICOS ── */
 .filtros-dinamicos-grid{
   display:grid;
@@ -317,6 +360,11 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'DM San
         Revisar
         <span class="nav-badge" id="badge-revisar">...</span>
       </div>
+      <div class="nav-item" onclick="navTo(this,'questoes-agente')">
+        <svg viewBox="0 0 15 15" fill="none"><path d="M2 2h11v11H2z" stroke="currentColor" stroke-width="1.2" rx="1"/><path d="M5 5h5M5 7.5h5M5 10h3" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>
+        Inseridas
+        <span class="nav-badge" id="badge-inseridas" style="display:none">0</span>
+      </div>
     </div>
     <div class="nav-group">
       <div class="nav-label">Config.</div>
@@ -363,37 +411,38 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'DM San
               <button class="tab" onclick="switchTab('auditoria',this)">Auditar base</button>
             </div>
             <div class="tab-panel active" id="panel-tematica">
-              <!-- dropdowns dinâmicos gerados pelo JS conforme raízes do BD -->
-              <div id="filtros-dinamicos" class="filtros-dinamicos-grid">
-                <div class="form-group" style="grid-column:1/-1">
-                  <span style="font-size:12px;color:var(--text3)">Carregando filtros...</span>
+
+              <div class="busca-livre-wrap">
+                <div class="form-group">
+                  <label>O que buscar?</label>
+                  <textarea
+                    id="busca-comando"
+                    class="busca-livre-textarea"
+                    placeholder="Ex: Busque questões de Direito Constitucional nível superior, banca CESPE, de 2020 em diante"
+                  ></textarea>
+                </div>
+                <div class="busca-livre-hints">
+                  <span class="busca-hint" onclick="usarHint(this)">Matemática nível médio</span>
+                  <span class="busca-hint" onclick="usarHint(this)">Direito Constitucional CESPE</span>
+                  <span class="busca-hint" onclick="usarHint(this)">Português banca FGV superior</span>
+                  <span class="busca-hint" onclick="usarHint(this)">Informática concurso 2023</span>
+                  <span class="busca-hint" onclick="usarHint(this)">Raciocínio Lógico nível médio</span>
                 </div>
               </div>
-              <div class="form-row" style="margin-top:4px">
-                <div class="form-group"><label>Ano inicial</label><input type="number" id="ano-ini" value="2018" min="2000" max="2025"/></div>
-                <div class="form-group"><label>Limite de questões</label><input type="number" id="limite" value="200" min="10" max="1000"/></div>
+
+              <div class="limite-row">
+                <div class="form-group">
+                  <label>Limite de questões</label>
+                  <input type="number" id="limite" value="50" min="5" max="500"/>
+                </div>
+                <div class="form-group" style="align-self:end">
+                  <button class="btn btn-primary" id="btn-tematica" onclick="iniciar('tematica')">
+                    <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><polygon points="3,1 13,7 3,13" fill="white"/></svg>
+                    Iniciar busca
+                  </button>
+                </div>
               </div>
-              <div class="section-lbl">Nível do cargo</div>
-              <div class="tags">
-                <span class="tag active" onclick="this.classList.toggle('active')">Fundamental</span>
-                <span class="tag active" onclick="this.classList.toggle('active')">Médio</span>
-                <span class="tag active" onclick="this.classList.toggle('active')">Superior</span>
-                <span class="tag" onclick="this.classList.toggle('active')">Policial / Militar</span>
-                <span class="tag" onclick="this.classList.toggle('active')">Fiscal / Auditoria</span>
-              </div>
-              <div class="section-lbl">Fontes ativas</div>
-              <div class="sources">
-                <label class="source-item"><input type="checkbox" checked> PCI Concursos</label>
-                <label class="source-item"><input type="checkbox" checked> CESPE oficial</label>
-                <label class="source-item"><input type="checkbox" checked> FGV Projetos</label>
-                <label class="source-item"><input type="checkbox"> Diário Oficial (PDF)</label>
-                <label class="source-item"><input type="checkbox" checked> VUNESP</label>
-                <label class="source-item"><input type="checkbox"> FCC</label>
-              </div>
-              <button class="btn btn-primary" id="btn-tematica" onclick="iniciar('tematica')">
-                <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><polygon points="3,1 13,7 3,13" fill="white"/></svg>
-                Iniciar busca temática
-              </button>
+
             </div>
             <div class="tab-panel" id="panel-prova">
               <div class="form-row-4">
@@ -507,6 +556,44 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'DM San
     </div>
 
     <!-- FONTES -->
+    <!-- QUESTÕES INSERIDAS PELO AGENTE -->
+    <div class="content" id="view-questoes-agente" style="display:none">
+      <div class="card">
+        <div class="ql-toolbar">
+          <input class="ql-search" id="ql-search" type="text"
+            placeholder="&#128269; Buscar por id, trecho ou assunto..."
+            oninput="filtrarQuestoes(this.value)"/>
+          <span class="ql-count" id="ql-count"></span>
+        </div>
+        <div style="overflow-x:auto">
+          <table class="ql-table">
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Questão</th>
+                <th>Assuntos</th>
+                <th>Inserida em</th>
+                <th>Status</th>
+                <th>Ação</th>
+              </tr>
+            </thead>
+            <tbody id="ql-tbody">
+              <tr><td colspan="6" style="text-align:center;padding:24px;color:var(--text3)">
+                <span class="spinner"></span> Carregando...
+              </td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="ql-pagination">
+          <span class="ql-page-info" id="ql-page-info"></span>
+          <div class="ql-page-btns">
+            <button class="ql-page-btn" id="ql-prev" onclick="qlPagina(-1)" disabled>&#8592; Anterior</button>
+            <button class="ql-page-btn" id="ql-next" onclick="qlPagina(1)">Próxima &#8594;</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <div class="content" id="view-fontes" style="display:none">
       <div class="card" style="max-width:500px">
         <div class="card-title">Fontes configuradas</div>
@@ -900,7 +987,7 @@ async function carregarAuditoriaResumo() {
 }
 
 // ── NAV ──
-const titles = {painel:'Painel do agente',historico:'Histórico de inserções',banco:'Banco de dados',revisar:'Questões para revisão',fontes:'Configuração de fontes'}
+const titles = {painel:'Painel do agente',historico:'Histórico de inserções',banco:'Banco de dados',revisar:'Questões para revisão',fontes:'Configuração de fontes','questoes-agente':'Questões inseridas pelo agente'}
 function navTo(el, view) {
   document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'))
   document.querySelectorAll('.content').forEach(c => c.style.display='none')
@@ -910,6 +997,7 @@ function navTo(el, view) {
   if (view === 'historico') carregarHistorico()
   if (view === 'banco') carregarBanco()
   if (view === 'revisar') carregarRevisar()
+  if (view === 'questoes-agente') carregarQuestoesAgente()
 }
 
 // ── HISTÓRICO ──
@@ -1131,50 +1219,50 @@ async function iniciar(mode) {
   addLog('ok', 'Conexão estabelecida.')
 
   if (mode === 'tematica') {
-    // Coleta todos os filtros selecionados
-    const filtrosDesc = Object.values(filtrosSelecionados).map(f => f.nome).join(' | ') || 'Todos'
-    const limite = document.getElementById('limite').value
+    const comando = (document.getElementById('busca-comando').value || '').trim()
+    const limite  = document.getElementById('limite').value
 
-    // Envia todos os IDs selecionados — a API vincula todos ao inserir
+    if (!comando) {
+      addLog('err', 'Digite o que deseja buscar antes de iniciar.')
+      running = false
+      document.getElementById('btn-tematica').disabled = false
+      document.getElementById('status-dot').className = 'dot online'
+      document.getElementById('status-text').textContent = 'Pronto'
+      return
+    }
+
     const ids_assunto = Object.values(filtrosSelecionados).map(f => f.id).filter(Boolean)
 
-    // Extrai disciplina e banca para log/busca (pelo nome da raiz)
-    const entradaBanca   = Object.values(filtrosSelecionados).find(f => f.raizNome && f.raizNome.toLowerCase().includes('banca'))
-    const entradaAssunto = Object.values(filtrosSelecionados).find(f => f.raizNome && !f.raizNome.toLowerCase().includes('banca'))
-    const disciplina = entradaAssunto ? entradaAssunto.nome : 'Todas'
-    const banca      = entradaBanca   ? entradaBanca.nome  : 'Todas'
-
-    addLog('info', `Buscando: ${filtrosDesc} | limite ${limite}...`)
-    await sleep(800)
-    document.getElementById('prog-fill').style.width = '30%'
-    document.getElementById('prog-pct').textContent = '30%'
+    addLog('info', `Comando: "${comando}"`)
+    addLog('info', `Limite: ${limite} questões`)
+    if (ids_assunto.length) addLog('info', `Assuntos vinculados: ${ids_assunto.length}`)
+    await sleep(600)
+    document.getElementById('prog-fill').style.width = '20%'
+    document.getElementById('prog-pct').textContent = '20%'
 
     try {
-      const res = await fetch(`${API}/agente/busca-tematica`, {
+      const res = await fetch(`${API}/agente/buscar`, {
         method:'POST', headers:{'Content-Type':'application/json'},
         body: JSON.stringify({
-          id_usuario: usuario.id,
-          disciplina,
-          banca,
-          ano_ini: parseInt(document.getElementById('ano-ini').value),
-          limite: parseInt(limite),
-          ids_assunto,
-          id_assunto: ids_assunto[0] || null  // compatibilidade com versão antiga da API
+          id_usuario:  usuario.id,
+          comando,
+          limite:      parseInt(limite),
+          ids_assunto
         })
       })
       if (!res.ok) {
         const erro = await res.text()
-        addLog('err', `Erro da API (${res.status}): ${erro.slice(0,120)}`)
+        addLog('err', `Erro da API (${res.status}): ${erro.slice(0,150)}`)
         throw new Error(`HTTP ${res.status}`)
       }
       const data = await res.json()
       if (!data.job_id) {
-        addLog('err', `Resposta inesperada da API: ${JSON.stringify(data).slice(0,120)}`)
+        addLog('err', `Resposta inesperada: ${JSON.stringify(data).slice(0,150)}`)
         throw new Error('job_id não retornado')
       }
       addLog('ok', `Busca iniciada — job ID: ${data.job_id}`)
-      document.getElementById('prog-fill').style.width = '50%'
-      document.getElementById('prog-pct').textContent = '50%'
+      document.getElementById('prog-fill').style.width = '40%'
+      document.getElementById('prog-pct').textContent = '40%'
       await monitorarJob(data.job_id)
     } catch(e) {
       addLog('err', 'Erro ao iniciar busca: ' + e.message)
@@ -1218,6 +1306,94 @@ async function monitorarJob(jobId) {
     document.getElementById('prog-fill').style.width = pct + '%'
     document.getElementById('prog-pct').textContent = pct + '%'
   }
+}
+
+
+// ── QUESTÕES INSERIDAS PELO AGENTE ────────────────────────────────────────────
+let qlTodas = []
+let qlFiltradas = []
+let qlPaginaAtual = 0
+const QL_POR_PAGINA = 20
+const HOST_GERENCIADOR = 'https://prismaconcursos.com.br/gerenciador/'
+
+async function carregarQuestoesAgente() {
+  const tbody = document.getElementById('ql-tbody')
+  tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:24px;color:var(--text3)"><span class="spinner"></span> Carregando...</td></tr>'
+  try {
+    const res = await fetch(`${API}/agente/questoes-inseridas?limite=500`)
+    if (!res.ok) throw new Error(`HTTP ${res.status}`)
+    const d = await res.json()
+    qlTodas = d.questoes || []
+    qlFiltradas = [...qlTodas]
+    qlPaginaAtual = 0
+    qlRenderizar()
+    const badge = document.getElementById('badge-inseridas')
+    if (qlTodas.length) { badge.textContent = qlTodas.length; badge.style.display = '' }
+  } catch(e) {
+    tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;padding:24px;color:var(--red)">Erro: ${e.message}</td></tr>`
+  }
+}
+
+function qlRenderizar() {
+  const tbody  = document.getElementById('ql-tbody')
+  const inicio = qlPaginaAtual * QL_POR_PAGINA
+  const fim    = inicio + QL_POR_PAGINA
+  const pagina = qlFiltradas.slice(inicio, fim)
+
+  document.getElementById('ql-count').textContent =
+    `${qlFiltradas.length} questão${qlFiltradas.length !== 1 ? 'ões' : ''}`
+  document.getElementById('ql-page-info').textContent =
+    `Página ${qlPaginaAtual + 1} de ${Math.max(1, Math.ceil(qlFiltradas.length / QL_POR_PAGINA))}`
+  document.getElementById('ql-prev').disabled = qlPaginaAtual === 0
+  document.getElementById('ql-next').disabled = fim >= qlFiltradas.length
+
+  if (!pagina.length) {
+    tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:24px;color:var(--text3)">Nenhuma questão encontrada.</td></tr>'
+    return
+  }
+
+  tbody.innerHTML = pagina.map(q => {
+    const trecho   = (q.nome || q.pergunta || '').substring(0, 80)
+    const data     = q.data_cadastro
+      ? new Date(q.data_cadastro).toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',year:'2-digit',hour:'2-digit',minute:'2-digit'})
+      : '—'
+    const status = q.finalizada == 1
+      ? '<span class="ql-badge ql-badge-ok">Finalizada</span>'
+      : '<span class="ql-badge ql-badge-pend">Pendente</span>'
+    const assuntos = (q.assuntos || []).map(a =>
+      `<span class="ql-assunto-tag">${escHtml(a)}</span>`
+    ).join('')
+    // id_personalizado com zeros à esquerda (9 dígitos), igual ao gerenciador
+    const idFormatado = String(q.id_personalizado || q.id).padStart(9, '0')
+    const link        = `https://www.prismaconcursos.com.br/questoes/${idFormatado}`
+    return `<tr>
+      <td class="ql-id">#${q.id}</td>
+      <td class="ql-trecho" title="${escHtml(trecho)}">${escHtml(trecho)}…</td>
+      <td><div class="ql-assuntos">${assuntos || '<span style="color:var(--text3);font-size:11px">—</span>'}</div></td>
+      <td class="ql-data">${data}</td>
+      <td>${status}</td>
+      <td><a class="ql-link" href="${link}" target="_blank">&#8599; Abrir</a></td>
+    </tr>`
+  }).join('')
+}
+
+function qlPagina(dir) {
+  const max = Math.max(0, Math.ceil(qlFiltradas.length / QL_POR_PAGINA) - 1)
+  qlPaginaAtual = Math.max(0, Math.min(max, qlPaginaAtual + dir))
+  qlRenderizar()
+  document.getElementById('view-questoes-agente').scrollTop = 0
+}
+
+function filtrarQuestoes(query) {
+  const q = query.trim().toLowerCase()
+  qlFiltradas = q
+    ? qlTodas.filter(item => {
+        const txt = [item.id, item.nome, item.pergunta, ...(item.assuntos||[])].join(' ').toLowerCase()
+        return txt.includes(q)
+      })
+    : [...qlTodas]
+  qlPaginaAtual = 0
+  qlRenderizar()
 }
 
 function sleep(ms) { return new Promise(r => setTimeout(r, ms)) }
