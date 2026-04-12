@@ -157,6 +157,12 @@ Retorne APENAS JSON válido neste formato exato, sem markdown, sem texto extra:
       "enunciado": "texto do enunciado/contexto se houver, senão string vazia",
       "pergunta": "texto completo da questão/comando",
       "gabarito": "letra do gabarito se identificável, senão string vazia",
+      "disciplina": "nome da disciplina/matéria (ex: Direito Constitucional, Matemática, Português)",
+      "banca": "nome da banca se identificável (ex: CESPE, FGV, VUNESP), senão string vazia",
+      "ano": "ano da prova se identificável (ex: 2023), senão string vazia",
+      "nivel": "nível do cargo se identificável (Fundamental, Médio, Superior), senão string vazia",
+      "orgao": "órgão/instituição se identificável (ex: TRF, Polícia Federal), senão string vazia",
+      "regiao": "estado/região se identificável (ex: SP, RJ, Federal), senão string vazia",
       "alternativas": [
         {{"letra": "A", "texto": "texto da alternativa", "correta": false}},
         {{"letra": "B", "texto": "texto da alternativa", "correta": false}},
@@ -170,9 +176,9 @@ Retorne APENAS JSON válido neste formato exato, sem markdown, sem texto extra:
 
 Regras importantes:
 - Extraia SOMENTE questões de concurso público com alternativas (A, B, C...)
-- Questões Certo/Errado são válidas: alternativas [{{"letra":"C","texto":"Certo","correta":...}},{{"letra":"E","texto":"Errado","correta":...}}]
-- Se não identificar o gabarito, deixe como string vazia ""
-- Não inclua questões sem alternativas identificáveis
+- Questões Certo/Errado são válidas
+- Se não identificar algum campo, deixe como string vazia ""
+- Tente extrair o máximo de metadados possível do contexto da página
 - Retorne JSON puro, sem nenhum texto antes ou depois
 
 Texto:
@@ -332,23 +338,30 @@ def vincular_assuntos(conn, id_usuario: int, id_pergunta: int, ids_assunto: list
 
 PROMPT_ANINHAR = """Você é um classificador de questões de concurso público brasileiro.
 
-Dada uma questão e a lista de assuntos disponíveis no sistema, identifique quais assuntos 
-da lista se aplicam a esta questão. Considere: matéria/disciplina, banca, ano, região, órgão, 
-escolaridade, cargo/área.
+Sua tarefa é identificar TODOS os assuntos da lista abaixo que se aplicam a esta questão.
+Seja PROATIVO — vincule tudo que fizer sentido: disciplina, banca, ano, região, nível, órgão, cargo, área.
 
-Assuntos disponíveis (formato: id | raiz | nome):
+Metadados da questão:
+{metadados}
+
+Texto da questão:
+{questao}
+
+Assuntos disponíveis (formato: id | categoria | nome):
 {assuntos}
 
-Questão:
-{questao}
+Instruções:
+- Para CADA categoria (Matéria, Banca, Ano, Região, Escolaridade, Cargo, Área, Órgão), tente encontrar um assunto correspondente
+- Se a questão menciona "CESPE" ou "Cebraspe", vincule o assunto de Banca correspondente
+- Se menciona "2023", vincule o assunto de Ano correspondente
+- Se menciona "ensino médio" ou "nível médio", vincule o assunto de Escolaridade correspondente
+- Vincule a disciplina mesmo que seja inferida pelo conteúdo (ex: questão sobre verbos = Português)
 
 Retorne APENAS JSON válido sem markdown:
 {{
-  "ids_assunto": [1, 2, 3],
-  "justificativa": "breve explicação"
-}}
-
-Selecione apenas os IDs que realmente se aplicam. Se nenhum se aplicar, retorne lista vazia."""
+  "ids_assunto": [1, 2, 3, 4, 5],
+  "justificativa": "breve explicação de cada vínculo"
+}}"""
 
 def identificar_assuntos(questao: dict, todos_assuntos: list) -> list:
     """
@@ -399,14 +412,23 @@ def identificar_assuntos(questao: dict, todos_assuntos: list) -> list:
 
     texto_questao = f"{questao.get('enunciado','')} {questao.get('pergunta','')}".strip()[:1000]
 
+    # Monta metadados extraídos da questão para ajudar o Claude
+    metadados = []
+    for campo in ['disciplina','banca','ano','nivel','orgao','regiao']:
+        val = questao.get(campo,'')
+        if val:
+            metadados.append(f"{campo}: {val}")
+    metadados_txt = "\n".join(metadados) if metadados else "Não identificados"
+
     try:
         client = get_claude()
         msg = client.messages.create(
             model="claude-haiku-4-5-20251001",
-            max_tokens=300,
+            max_tokens=400,
             messages=[{"role": "user", "content": PROMPT_ANINHAR.format(
                 assuntos=lista,
-                questao=texto_questao
+                questao=texto_questao,
+                metadados=metadados_txt
             )}]
         )
         txt = msg.content[0].text.strip().replace("```json","").replace("```","").strip()
