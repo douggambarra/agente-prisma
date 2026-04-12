@@ -1,0 +1,71 @@
+=======================================================
+  PRISMA AGENTE IA — ATUALIZAÇÃO 12/04/2026 (v2)
+=======================================================
+
+ARQUIVOS DESTA ENTREGA:
+------------------------
+  app/main.py                      → substitui o existente
+  app/routers/upload_prova.py      → NOVO
+  app/services/processador_pdf.py  → NOVO
+  requirements.txt                 → substitui o existente
+
+COMO APLICAR:
+--------------
+1. Copie os arquivos para as pastas correspondentes no projeto
+2. Substitua main.py e requirements.txt
+3. git add . && git commit -m "feat: upload PDF de prova" && git push
+4. Railway faz deploy automático
+
+ENDPOINTS NOVOS:
+-----------------
+  POST /upload-prova/processar
+      → Recebe os PDFs (multipart/form-data)
+      → campos: prova (obrigatório), gabarito (opcional)
+      → Retorna: { job_id, status }
+
+  GET  /upload-prova/job/{job_id}
+      → Polling do status
+      → status possíveis: aguardando → processando → aguardando_confirmacao → salvo | erro
+      → Quando "aguardando_confirmacao": resultado contém dados_prova + questoes
+
+  POST /upload-prova/confirmar
+      → Salva os dados revisados no banco
+      → Body: { id_usuario, job_id, dados_prova, questoes }
+
+O QUE FOI CORRIGIDO NESTA VERSÃO (v2):
+----------------------------------------
+Após analisar os arquivos do gerenciador PHP, foram identificadas e
+corrigidas as seguintes diferenças em relação à v1:
+
+1. TABELA PROVA — campos corretos
+   A tabela prova usa: id_orgao, nome, url, banca, data_da_prova
+   (não usa: titulo, ano, orgao, cargo, escolaridade, uf como campos diretos)
+   Esses metadados ficam nos assuntos vinculados via vinculo_assunto_prova.
+
+2. INSERT DE PERGUNTA — 2 passos obrigatórios
+   Passo 1: INSERT mínimo com nome=timestamp e id_usuario (igual ao PHP)
+   Passo 2: UPDATE com todos os campos reais
+   (a v1 misturava os dois em um INSERT só)
+
+3. RESPOSTAS — inseridas todas como correta=0 primeiro
+   Depois um UPDATE separado marca apenas a correta.
+   (igual ao alterar_pergunta.php: zera todas, depois marca a certa)
+
+4. VÍNCULO PROVA-PERGUNTA — inclui id_topico=0 e posicao
+   (igual ao cadastrar_multipla_pergunta_prova.php)
+
+5. NOME DA QUESTÃO — usa disciplina como nome provisório
+   O gerenciador gera o nome a partir dos assuntos (raízes).
+   Como o agente não vincula assuntos neste fluxo, usa a disciplina
+   extraída pelo Claude como nome provisório.
+
+OBSERVAÇÃO IMPORTANTE — ASSUNTOS:
+-----------------------------------
+O gerenciador vincula cada questão a assuntos via vinculo_assunto_pergunta.
+Neste fluxo de upload, os assuntos NÃO são vinculados automaticamente,
+pois dependem da árvore de assuntos específica da Prisma.
+
+Isso pode ser implementado numa próxima versão: o Claude pode sugerir
+quais assuntos da árvore correspondem a cada questão, e o usuário confirma.
+
+=======================================================

@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from app.routers import auth, agente, auditoria
+from app.routers import auth, agente, auditoria, upload_prova
 from app.database import test_connection
 
 app = FastAPI(title="Prisma Concursos - Agente IA", version="1.0.0")
@@ -13,9 +13,10 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-app.include_router(auth.router, prefix="/auth", tags=["Auth"])
-app.include_router(agente.router, prefix="/agente", tags=["Agente"])
-app.include_router(auditoria.router, prefix="/auditoria", tags=["Auditoria"])
+app.include_router(auth.router,         prefix="/auth",         tags=["Auth"])
+app.include_router(agente.router,       prefix="/agente",       tags=["Agente"])
+app.include_router(auditoria.router,    prefix="/auditoria",    tags=["Auditoria"])
+app.include_router(upload_prova.router, prefix="/upload-prova", tags=["Upload Prova"])
 
 @app.get("/")
 def root():
