@@ -734,7 +734,10 @@ function selecionarCascade(key, id, nome, leafEl) {
   dropdown.querySelectorAll('.cascade-leaf').forEach(l => l.classList.remove('selected'))
   leafEl.classList.add('selected')
 
-  filtrosSelecionados[key] = { id, nome }
+  // raizNome = nome da pasta raiz (label do dropdown), usado para identificar banca/assunto
+  const raizNome = document.querySelector(`#cw-${key}`)
+    ?.closest('.form-group')?.querySelector('label')?.textContent || ''
+  filtrosSelecionados[key] = { id, nome, raizNome }
 
   const disp = document.getElementById('cd-' + key)
   if (disp) { disp.textContent = '[' + id + '] ' + nome; disp.classList.remove('placeholder') }
@@ -1128,12 +1131,19 @@ async function iniciar(mode) {
   addLog('ok', 'Conexão estabelecida.')
 
   if (mode === 'tematica') {
-    // Coleta todos os filtros dinâmicos selecionados
-    const filtros = {}
-    Object.entries(filtrosSelecionados).forEach(([key, val]) => { filtros[key] = val })
-    const filtrosDesc = Object.values(filtros).map(f => f.nome).join(' | ') || 'Todos'
-    const banca = 'Todas'  // banca agora vem dos filtros dinâmicos
+    // Coleta todos os filtros selecionados
+    const filtrosDesc = Object.values(filtrosSelecionados).map(f => f.nome).join(' | ') || 'Todos'
     const limite = document.getElementById('limite').value
+
+    // Envia todos os IDs selecionados — a API vincula todos ao inserir
+    const ids_assunto = Object.values(filtrosSelecionados).map(f => f.id).filter(Boolean)
+
+    // Extrai disciplina e banca para log/busca (pelo nome da raiz)
+    const entradaBanca   = Object.values(filtrosSelecionados).find(f => f.raizNome && f.raizNome.toLowerCase().includes('banca'))
+    const entradaAssunto = Object.values(filtrosSelecionados).find(f => f.raizNome && !f.raizNome.toLowerCase().includes('banca'))
+    const disciplina = entradaAssunto ? entradaAssunto.nome : 'Todas'
+    const banca      = entradaBanca   ? entradaBanca.nome  : 'Todas'
+
     addLog('info', `Buscando: ${filtrosDesc} | limite ${limite}...`)
     await sleep(800)
     document.getElementById('prog-fill').style.width = '30%'
@@ -1144,12 +1154,24 @@ async function iniciar(mode) {
         method:'POST', headers:{'Content-Type':'application/json'},
         body: JSON.stringify({
           id_usuario: usuario.id,
-          filtros: filtrosSelecionados,
+          disciplina,
+          banca,
           ano_ini: parseInt(document.getElementById('ano-ini').value),
-          limite: parseInt(limite)
+          limite: parseInt(limite),
+          ids_assunto,
+          id_assunto: ids_assunto[0] || null  // compatibilidade com versão antiga da API
         })
       })
+      if (!res.ok) {
+        const erro = await res.text()
+        addLog('err', `Erro da API (${res.status}): ${erro.slice(0,120)}`)
+        throw new Error(`HTTP ${res.status}`)
+      }
       const data = await res.json()
+      if (!data.job_id) {
+        addLog('err', `Resposta inesperada da API: ${JSON.stringify(data).slice(0,120)}`)
+        throw new Error('job_id não retornado')
+      }
       addLog('ok', `Busca iniciada — job ID: ${data.job_id}`)
       document.getElementById('prog-fill').style.width = '50%'
       document.getElementById('prog-pct').textContent = '50%'
