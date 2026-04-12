@@ -109,7 +109,7 @@ def processar_pdfs(conteudo_prova: bytes, conteudo_gabarito: Optional[bytes] = N
 
     msg = client.messages.create(
         model="claude-opus-4-6",
-        max_tokens=8000,
+        max_tokens=16000,
         messages=[{"role": "user", "content": content}]
     )
 
@@ -118,16 +118,69 @@ def processar_pdfs(conteudo_prova: bytes, conteudo_gabarito: Optional[bytes] = N
     txt = re.sub(r"\s*```$", "", txt)
     txt = txt.strip()
 
-    m = re.search(r'\{.*\}', txt, re.DOTALL)
-    if not m:
-        raise ValueError("Claude não retornou JSON válido.")
-
-    dados = json.loads(m.group())
+    # Tenta parse direto
+    try:
+        dados = json.loads(txt)
+    except json.JSONDecodeError:
+        # Tenta extrair o JSON com regex
+        m = re.search(r'\{.*\}', txt, re.DOTALL)
+        if not m:
+            raise ValueError("Claude não retornou JSON válido.")
+        try:
+            dados = json.loads(m.group())
+        except json.JSONDecodeError:
+            # JSON truncado — tenta recuperar questões parciais
+            dados = _recuperar_json_truncado(txt)
 
     if "dados_prova" not in dados or "questoes" not in dados:
         raise ValueError("Estrutura JSON incompleta retornada pelo Claude.")
 
     return dados
+
+
+def _recuperar_json_truncado(txt: str) -> dict:
+    """
+    Quando o Claude trunca o JSON no meio (resposta muito longa),
+    tenta recuperar os dados parciais já extraídos.
+    """
+    # Extrai dados_prova
+    dados_prova = {}
+    m = re.search(r'"dados_prova"\s*:\s*\{([^}]+)\}', txt, re.DOTALL)
+    if m:
+        try:
+            dados_prova = json.loads('{' + m.group(1) + '}')
+        except Exception:
+            pass
+
+    # Extrai questões completas (objetos fechados com })
+    questoes = []
+    # Encontra o array de questões
+    arr_match = re.search(r'"questoes"\s*:\s*\[(.+)', txt, re.DOTALL)
+    if arr_match:
+        arr_txt = arr_match.group(1)
+        # Extrai objetos JSON completos um a um
+        depth = 0
+        start = None
+        for i, ch in enumerate(arr_txt):
+            if ch == '{':
+                if depth == 0:
+                    start = i
+                depth += 1
+            elif ch == '}':
+                depth -= 1
+                if depth == 0 and start is not None:
+                    obj_txt = arr_txt[start:i+1]
+                    try:
+                        questoes.append(json.loads(obj_txt))
+                    except Exception:
+                        pass
+                    start = None
+
+    if not questoes:
+        raise ValueError(f"Não foi possível recuperar questões do JSON truncado.")
+
+    print(f"JSON truncado recuperado: {len(questoes)} questões extraídas.")
+    return {"dados_prova": dados_prova, "questoes": questoes}
 
 
 # ── SALVAR NO BANCO (fiel ao gerenciador PHP) ─────────────────────────────────
