@@ -8,225 +8,89 @@
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet"/>
 <style>
 :root {
-  --bg:       #0e0f11;
-  --bg2:      #161719;
-  --bg3:      #1e2023;
-  --border:   #2a2c30;
-  --border2:  #363940;
-  --text:     #e8e9eb;
-  --text2:    #9a9da5;
-  --text3:    #5c5f68;
-  --purple:   #8b7cf8;
-  --purple2:  #6c5ce7;
-  --purple3:  #3d3480;
-  --purple-bg:#1a1730;
-  --teal:     #2dd4a0;
-  --teal-bg:  #0d2b22;
-  --amber:    #f0a834;
-  --amber-bg: #261e0a;
-  --red:      #f06060;
-  --red-bg:   #261010;
-  --green:    #5dd47a;
-  --green-bg: #0d2216;
-  --radius:   10px;
-  --radius-lg:14px;
+  --bg:#0e0f11;--bg2:#161719;--bg3:#1e2023;
+  --border:#2a2c30;--border2:#363940;
+  --text:#e8e9eb;--text2:#9a9da5;--text3:#5c5f68;
+  --purple:#8b7cf8;--purple2:#6c5ce7;--purple3:#3d3480;--purple-bg:#1a1730;
+  --teal:#2dd4a0;--teal-bg:#0d2b22;
+  --amber:#f0a834;--amber-bg:#261e0a;
+  --red:#f06060;--red-bg:#261010;
+  --green:#5dd47a;--green-bg:#0d2216;
+  --radius:10px;--radius-lg:14px;
 }
-
 *{box-sizing:border-box;margin:0;padding:0}
 html,body{height:100%;background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;font-size:14px;line-height:1.5}
-
-/* ── LAYOUT ────────────────────────────────── */
 .app{display:flex;height:100vh;overflow:hidden}
-
-/* ── SIDEBAR ───────────────────────────────── */
-.sidebar{
-  width:220px;min-width:220px;
-  background:var(--bg2);
-  border-right:1px solid var(--border);
-  display:flex;flex-direction:column;
-  padding:0;overflow:hidden;
-}
-.sidebar-logo{
-  display:flex;align-items:center;gap:10px;
-  padding:20px 18px 16px;
-  border-bottom:1px solid var(--border);
-}
-.logo-mark{
-  width:34px;height:34px;min-width:34px;
-  background:var(--purple2);
-  border-radius:10px;
-  display:flex;align-items:center;justify-content:center;
-}
+.sidebar{width:220px;min-width:220px;background:var(--bg2);border-right:1px solid var(--border);display:flex;flex-direction:column}
+.sidebar-logo{display:flex;align-items:center;gap:10px;padding:20px 18px 16px;border-bottom:1px solid var(--border)}
+.logo-mark{width:34px;height:34px;min-width:34px;background:var(--purple2);border-radius:10px;display:flex;align-items:center;justify-content:center}
 .logo-mark svg{width:18px;height:18px}
 .logo-text .name{font-family:'Syne',sans-serif;font-size:15px;font-weight:700;color:var(--text);letter-spacing:-0.02em}
 .logo-text .sub{font-size:11px;color:var(--text3);margin-top:1px}
-
 .nav-group{padding:16px 10px 4px}
 .nav-label{font-size:10px;font-weight:600;color:var(--text3);letter-spacing:0.08em;text-transform:uppercase;padding:0 8px;margin-bottom:4px}
-.nav-item{
-  display:flex;align-items:center;gap:9px;
-  padding:8px 10px;border-radius:var(--radius);
-  font-size:13px;color:var(--text2);
-  cursor:pointer;transition:all 0.15s;
-  border:1px solid transparent;
-  user-select:none;
-}
+.nav-item{display:flex;align-items:center;gap:9px;padding:8px 10px;border-radius:var(--radius);font-size:13px;color:var(--text2);cursor:pointer;transition:all 0.15s;border:1px solid transparent;user-select:none}
 .nav-item:hover{background:var(--bg3);color:var(--text)}
 .nav-item.active{background:var(--purple-bg);color:var(--purple);border-color:var(--purple3)}
 .nav-item svg{width:15px;height:15px;min-width:15px;opacity:0.7}
 .nav-item.active svg{opacity:1}
-.nav-badge{
-  margin-left:auto;
-  background:var(--amber-bg);color:var(--amber);
-  font-size:10px;font-weight:600;
-  padding:2px 6px;border-radius:20px;
-}
-
-.sidebar-bottom{
-  margin-top:auto;
-  padding:14px 18px;
-  border-top:1px solid var(--border);
-}
+.nav-badge{margin-left:auto;background:var(--amber-bg);color:var(--amber);font-size:10px;font-weight:600;padding:2px 6px;border-radius:20px}
+.sidebar-bottom{margin-top:auto;padding:14px 18px;border-top:1px solid var(--border)}
 .user-card{display:flex;align-items:center;gap:10px}
-.user-avatar{
-  width:30px;height:30px;min-width:30px;
-  border-radius:50%;
-  background:var(--purple-bg);
-  border:1px solid var(--purple3);
-  display:flex;align-items:center;justify-content:center;
-  font-size:11px;font-weight:600;color:var(--purple);
-  font-family:'Syne',sans-serif;
-}
+.user-avatar{width:30px;height:30px;min-width:30px;border-radius:50%;background:var(--purple-bg);border:1px solid var(--purple3);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;color:var(--purple);font-family:'Syne',sans-serif}
 .user-info .uname{font-size:13px;font-weight:500;color:var(--text)}
 .user-info .urole{font-size:11px;color:var(--text3)}
-
-/* ── MAIN ──────────────────────────────────── */
 .main{flex:1;display:flex;flex-direction:column;overflow:hidden}
-
-.topbar{
-  display:flex;align-items:center;justify-content:space-between;
-  padding:0 24px;height:56px;min-height:56px;
-  border-bottom:1px solid var(--border);
-  background:var(--bg2);
-}
+.topbar{display:flex;align-items:center;justify-content:space-between;padding:0 24px;height:56px;min-height:56px;border-bottom:1px solid var(--border);background:var(--bg2)}
 .topbar-title{font-family:'Syne',sans-serif;font-size:15px;font-weight:600;color:var(--text);letter-spacing:-0.01em}
-.status-pill{
-  display:flex;align-items:center;gap:7px;
-  padding:5px 12px;border-radius:20px;
-  border:1px solid var(--border2);
-  font-size:12px;color:var(--text2);
-}
+.status-pill{display:flex;align-items:center;gap:7px;padding:5px 12px;border-radius:20px;border:1px solid var(--border2);font-size:12px;color:var(--text2)}
 .dot{width:7px;height:7px;border-radius:50%;background:var(--text3);min-width:7px}
 .dot.online{background:var(--teal);box-shadow:0 0 6px var(--teal)}
 .dot.running{background:var(--amber);animation:pulse 1s infinite}
 @keyframes pulse{0%,100%{opacity:1}50%{opacity:0.4}}
-
 .content{flex:1;overflow-y:auto;padding:24px}
 .content::-webkit-scrollbar{width:4px}
-.content::-webkit-scrollbar-track{background:transparent}
 .content::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px}
-
-/* ── MÉTRICAS ──────────────────────────────── */
 .metrics{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-bottom:20px}
-.metric{
-  background:var(--bg2);border:1px solid var(--border);
-  border-radius:var(--radius-lg);padding:16px;
-  transition:border-color 0.2s;
-}
+.metric{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius-lg);padding:16px;transition:border-color 0.2s}
 .metric:hover{border-color:var(--border2)}
 .metric-label{font-size:11px;color:var(--text3);margin-bottom:8px;text-transform:uppercase;letter-spacing:0.05em}
 .metric-value{font-family:'Syne',sans-serif;font-size:24px;font-weight:700;color:var(--text);letter-spacing:-0.02em}
 .metric-delta{font-size:11px;color:var(--text3);margin-top:4px}
 .metric-delta.up{color:var(--teal)}
-
-/* ── GRID ──────────────────────────────────── */
 .grid{display:grid;grid-template-columns:1fr 340px;gap:16px;align-items:start}
-
-/* ── CARD ──────────────────────────────────── */
-.card{
-  background:var(--bg2);border:1px solid var(--border);
-  border-radius:var(--radius-lg);padding:20px;
-}
-.card-title{
-  font-family:'Syne',sans-serif;font-size:13px;font-weight:600;
-  color:var(--text);letter-spacing:0.01em;margin-bottom:16px;
-}
-
-/* ── TABS ──────────────────────────────────── */
+.card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius-lg);padding:20px}
+.card-title{font-family:'Syne',sans-serif;font-size:13px;font-weight:600;color:var(--text);letter-spacing:0.01em;margin-bottom:16px}
 .tabs{display:flex;gap:2px;margin-bottom:18px;background:var(--bg3);border-radius:var(--radius);padding:3px}
-.tab{
-  flex:1;padding:7px 6px;font-size:12px;font-weight:500;
-  text-align:center;cursor:pointer;
-  color:var(--text2);background:transparent;
-  border:none;border-radius:8px;transition:all 0.15s;
-}
+.tab{flex:1;padding:7px 6px;font-size:12px;font-weight:500;text-align:center;cursor:pointer;color:var(--text2);background:transparent;border:none;border-radius:8px;transition:all 0.15s}
 .tab:hover{color:var(--text)}
 .tab.active{background:var(--bg2);color:var(--purple);box-shadow:0 1px 3px rgba(0,0,0,0.3)}
 .tab-panel{display:none}
 .tab-panel.active{display:block}
-
-/* ── FORM ──────────────────────────────────── */
 .form-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px}
 .form-row-4{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:8px;margin-bottom:12px}
 .form-group{display:flex;flex-direction:column;gap:5px}
 .form-group label{font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:0.05em}
-.form-group select,
-.form-group input{
-  width:100%;background:var(--bg3);
-  border:1px solid var(--border);
-  border-radius:var(--radius);
-  padding:8px 10px;font-size:13px;
-  color:var(--text);font-family:'DM Sans',sans-serif;
-  outline:none;transition:border-color 0.15s;
-}
-.form-group select:focus,
-.form-group input:focus{border-color:var(--purple2)}
+.form-group select,.form-group input{width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius);padding:8px 10px;font-size:13px;color:var(--text);font-family:'DM Sans',sans-serif;outline:none;transition:border-color 0.15s}
+.form-group select:focus,.form-group input:focus{border-color:var(--purple2)}
 .form-group select option{background:var(--bg3)}
-
-/* ── TAGS ──────────────────────────────────── */
 .tags{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:14px}
-.tag{
-  font-size:11px;padding:4px 10px;border-radius:20px;
-  border:1px solid var(--border2);color:var(--text2);
-  cursor:pointer;background:transparent;transition:all 0.15s;
-}
+.tag{font-size:11px;padding:4px 10px;border-radius:20px;border:1px solid var(--border2);color:var(--text2);cursor:pointer;background:transparent;transition:all 0.15s}
 .tag:hover{border-color:var(--purple2);color:var(--text)}
 .tag.active{background:var(--purple-bg);border-color:var(--purple3);color:var(--purple)}
-
-/* ── FONTES ────────────────────────────────── */
 .sources{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:14px}
-.source-item{
-  display:flex;align-items:center;gap:8px;
-  font-size:12px;color:var(--text2);
-  padding:5px 0;cursor:pointer;
-}
+.source-item{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--text2);padding:5px 0;cursor:pointer}
 .source-item input[type=checkbox]{accent-color:var(--purple);width:13px;height:13px}
-
-/* ── BUTTONS ───────────────────────────────── */
-.btn{
-  width:100%;padding:10px;border:none;border-radius:var(--radius);
-  font-size:13px;font-weight:500;font-family:'DM Sans',sans-serif;
-  cursor:pointer;display:flex;align-items:center;justify-content:center;gap:7px;
-  transition:all 0.15s;
-}
+.btn{width:100%;padding:10px;border:none;border-radius:var(--radius);font-size:13px;font-weight:500;font-family:'DM Sans',sans-serif;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:7px;transition:all 0.15s}
 .btn-primary{background:var(--purple2);color:#fff}
 .btn-primary:hover{background:var(--purple)}
-.btn-primary:active{transform:scale(0.99)}
 .btn-primary:disabled{background:var(--bg3);color:var(--text3);cursor:not-allowed}
 .btn-secondary{background:transparent;color:var(--purple);border:1px solid var(--purple3)}
 .btn-secondary:hover{background:var(--purple-bg)}
 .btn-secondary:disabled{border-color:var(--border);color:var(--text3);cursor:not-allowed}
 .btn-teal{background:var(--teal-bg);color:var(--teal);border:1px solid #1a4d3a}
 .btn-teal:hover{background:#122e22}
-
-/* ── LOG ───────────────────────────────────── */
-.log{
-  background:var(--bg);border:1px solid var(--border);
-  border-radius:var(--radius);padding:12px;
-  font-family:monospace;font-size:11px;
-  color:var(--text2);line-height:1.9;
-  max-height:160px;overflow-y:auto;
-}
+.log{background:var(--bg);border:1px solid var(--border);border-radius:var(--radius);padding:12px;font-family:monospace;font-size:11px;color:var(--text2);line-height:1.9;max-height:160px;overflow-y:auto}
 .log::-webkit-scrollbar{width:3px}
 .log::-webkit-scrollbar-thumb{background:var(--border2)}
 .log-line{display:flex;gap:10px}
@@ -235,37 +99,17 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'DM San
 .log-err{color:var(--red)}
 .log-info{color:#7ab3f0}
 .log-warn{color:var(--amber)}
-
-/* ── PROGRESS ──────────────────────────────── */
 .progress-label{display:flex;justify-content:space-between;font-size:11px;color:var(--text3);margin-bottom:6px}
 .progress-bar{height:4px;background:var(--bg3);border-radius:2px;overflow:hidden;margin-bottom:14px}
 .progress-fill{height:100%;background:var(--purple2);border-radius:2px;transition:width 0.4s}
-
-/* ── FILA ──────────────────────────────────── */
-.queue-item{
-  display:flex;align-items:center;justify-content:space-between;
-  padding:9px 11px;background:var(--bg3);
-  border-radius:var(--radius);margin-bottom:7px;
-  border:1px solid var(--border);
-}
+.queue-item{display:flex;align-items:center;justify-content:space-between;padding:9px 11px;background:var(--bg3);border-radius:var(--radius);margin-bottom:7px;border:1px solid var(--border)}
 .qi-title{font-size:12px;font-weight:500;color:var(--text)}
 .qi-sub{font-size:11px;color:var(--text3);margin-top:2px}
 .qi-rm{background:none;border:none;color:var(--text3);cursor:pointer;font-size:16px;padding:0 3px;line-height:1}
 .qi-rm:hover{color:var(--red)}
-.empty-q{
-  text-align:center;padding:18px;
-  background:var(--bg3);border-radius:var(--radius);
-  font-size:12px;color:var(--text3);margin-bottom:10px;
-  border:1px dashed var(--border);
-}
-
-/* ── AUDIT ITEMS ───────────────────────────── */
-.audit-item{
-  display:flex;align-items:flex-start;gap:10px;
-  padding:11px;background:var(--bg3);
-  border-radius:var(--radius);margin-bottom:8px;
-  border:1px solid var(--border);
-}
+.empty-q{text-align:center;padding:18px;background:var(--bg3);border-radius:var(--radius);font-size:12px;color:var(--text3);margin-bottom:10px;border:1px dashed var(--border)}
+.audit-item{display:flex;align-items:flex-start;gap:10px;padding:11px;background:var(--bg3);border-radius:var(--radius);margin-bottom:8px;border:1px solid var(--border);cursor:pointer;transition:border-color 0.15s}
+.audit-item:hover{border-color:var(--border2)}
 .abadge{font-size:10px;font-weight:600;padding:3px 8px;border-radius:20px;white-space:nowrap}
 .abadge-err{background:var(--red-bg);color:var(--red)}
 .abadge-warn{background:var(--amber-bg);color:var(--amber)}
@@ -273,57 +117,151 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'DM San
 .atext{font-size:12px;color:var(--text);line-height:1.4}
 .asub{font-size:11px;color:var(--text3);margin-top:3px}
 .section-lbl{font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:0.05em;margin-bottom:8px}
-
-/* ── LOGIN ─────────────────────────────────── */
-.login-screen{
-  position:fixed;inset:0;
-  background:var(--bg);
-  display:flex;align-items:center;justify-content:center;
-  z-index:100;
-}
-.login-box{
-  width:360px;
-  background:var(--bg2);
-  border:1px solid var(--border);
-  border-radius:18px;
-  padding:36px;
-}
+.login-screen{position:fixed;inset:0;background:var(--bg);display:flex;align-items:center;justify-content:center;z-index:100}
+.login-box{width:360px;background:var(--bg2);border:1px solid var(--border);border-radius:18px;padding:36px}
 .login-logo{display:flex;align-items:center;gap:12px;margin-bottom:28px}
 .login-title{font-family:'Syne',sans-serif;font-size:20px;font-weight:700;color:var(--text);margin-bottom:4px;letter-spacing:-0.02em}
 .login-sub{font-size:13px;color:var(--text3);margin-bottom:24px}
 .login-field{margin-bottom:14px}
 .login-field label{display:block;font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:0.05em;margin-bottom:6px}
-.login-field input{
-  width:100%;background:var(--bg3);
-  border:1px solid var(--border2);
-  border-radius:var(--radius);
-  padding:10px 12px;font-size:14px;
-  color:var(--text);font-family:'DM Sans',sans-serif;
-  outline:none;transition:border-color 0.15s;
-}
+.login-field input{width:100%;background:var(--bg3);border:1px solid var(--border2);border-radius:var(--radius);padding:10px 12px;font-size:14px;color:var(--text);font-family:'DM Sans',sans-serif;outline:none;transition:border-color 0.15s}
 .login-field input:focus{border-color:var(--purple2)}
 .login-err{font-size:12px;color:var(--red);margin-bottom:10px;display:none}
-.login-btn{
-  width:100%;padding:11px;
-  background:var(--purple2);color:#fff;
-  border:none;border-radius:var(--radius);
-  font-size:14px;font-weight:500;font-family:'DM Sans',sans-serif;
-  cursor:pointer;margin-top:6px;transition:background 0.15s;
-}
+.login-btn{width:100%;padding:11px;background:var(--purple2);color:#fff;border:none;border-radius:var(--radius);font-size:14px;font-weight:500;font-family:'DM Sans',sans-serif;cursor:pointer;margin-top:6px;transition:background 0.15s}
 .login-btn:hover{background:var(--purple)}
+.hist-item{display:flex;align-items:center;justify-content:space-between;padding:12px;background:var(--bg3);border-radius:var(--radius);margin-bottom:8px;border:1px solid var(--border)}
+.hist-badge{font-size:10px;font-weight:600;padding:3px 8px;border-radius:20px;background:var(--teal-bg);color:var(--teal)}
+.hist-info{font-size:12px;color:var(--text);font-weight:500}
+.hist-sub{font-size:11px;color:var(--text3);margin-top:2px}
+.hist-num{font-family:'Syne',sans-serif;font-size:18px;font-weight:700;color:var(--teal)}
+.hist-num-label{font-size:10px;color:var(--text3);text-align:right}
+.revisar-item{background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius);padding:14px;margin-bottom:10px}
+.revisar-header{display:flex;align-items:center;gap:10px;margin-bottom:8px}
+.revisar-id{font-family:'Syne',sans-serif;font-size:12px;color:var(--text3)}
+.revisar-texto{font-size:12px;color:var(--text);line-height:1.6;margin-bottom:8px}
+.revisar-actions{display:flex;gap:8px}
+.btn-sm{padding:5px 12px;font-size:11px;font-weight:500;border-radius:6px;cursor:pointer;border:none;font-family:'DM Sans',sans-serif}
+.btn-sm-ok{background:var(--teal-bg);color:var(--teal)}
+.btn-sm-skip{background:var(--bg2);color:var(--text2);border:1px solid var(--border2)}
+.empty-state{text-align:center;padding:40px;color:var(--text3);font-size:13px}
+.spinner{display:inline-block;width:16px;height:16px;border:2px solid var(--border2);border-top-color:var(--purple);border-radius:50%;animation:spin 0.8s linear infinite;margin-right:8px}
+@keyframes spin{to{transform:rotate(360deg)}}
+.stat-row{display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--border)}
+.stat-row:last-child{border-bottom:none}
+.stat-label{font-size:12px;color:var(--text2)}
+.stat-value{font-family:'Syne',sans-serif;font-size:14px;font-weight:600;color:var(--text)}
+
+/* ── SELECT CUSTOMIZADO (estilo gerenciador) ── */
+.cselect-wrap{position:relative;width:100%}
+.cselect-trigger{width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius);padding:8px 32px 8px 10px;font-size:13px;color:var(--text);font-family:'DM Sans',sans-serif;cursor:pointer;transition:border-color 0.15s;display:flex;align-items:center;justify-content:space-between;user-select:none;min-height:36px}
+.cselect-trigger:hover{border-color:var(--border2)}
+.cselect-trigger.open{border-color:var(--purple2);border-bottom-left-radius:0;border-bottom-right-radius:0}
+.cselect-trigger .cs-text{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.cselect-trigger .cs-text.placeholder{color:var(--text3)}
+.cselect-trigger .cs-arrow{font-size:9px;color:var(--text3);transition:transform 0.2s;flex-shrink:0;margin-left:6px}
+.cselect-trigger.open .cs-arrow{transform:rotate(180deg)}
+.cselect-dropdown{display:none;position:absolute;top:100%;left:0;right:0;background:var(--bg3);border:1px solid var(--purple2);border-top:1px solid var(--border);border-bottom-left-radius:var(--radius);border-bottom-right-radius:var(--radius);z-index:100;box-shadow:0 8px 24px rgba(0,0,0,0.4)}
+.cselect-dropdown.open{display:block}
+.cselect-search{padding:8px 10px;border-bottom:1px solid var(--border);position:sticky;top:0;background:var(--bg3);z-index:1}
+.cselect-search input{width:100%;background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:5px 10px;font-size:12px;color:var(--text);font-family:'DM Sans',sans-serif;outline:none}
+.cselect-search input:focus{border-color:var(--purple2)}
+.cselect-list{max-height:260px;overflow-y:auto}
+.cselect-list::-webkit-scrollbar{width:4px}
+.cselect-list::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px}
+.cselect-group-label{padding:8px 12px 4px;font-size:10px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:0.07em;border-top:1px solid var(--border);margin-top:2px}
+.cselect-group-label:first-child{border-top:none;margin-top:0}
+.cselect-item{padding:8px 14px;font-size:13px;color:var(--text2);cursor:pointer;transition:background 0.1s;display:flex;align-items:center;gap:8px}
+.cselect-item:hover{background:rgba(255,255,255,0.04);color:var(--text)}
+.cselect-item.selected{background:var(--purple-bg);color:var(--purple)}
+.cselect-item .cs-id{color:var(--text3);font-size:11px;min-width:32px;flex-shrink:0}
+.cselect-item.selected .cs-id{color:var(--purple2)}
+.cselect-item.depth-1{padding-left:22px}
+.cselect-item.depth-2{padding-left:32px}
+.cselect-item.depth-3{padding-left:42px}
+.cselect-empty{padding:16px;text-align:center;font-size:12px;color:var(--text3)}
+.cselect-item.hidden{display:none}
+
+/* ── FILTROS DINÂMICOS ── */
+.filtros-dinamicos-grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fill,minmax(200px,1fr));
+  gap:10px;
+  margin-bottom:12px;
+}
+/* dropdown de cascata: abre abaixo do trigger, ocupa largura do wrap */
+.cselect-cascade-wrap{position:relative;width:100%;}
+.cselect-cascade-trigger{
+  width:100%;background:var(--bg3);border:1px solid var(--border);
+  border-radius:var(--radius);padding:8px 10px;font-size:13px;
+  color:var(--text);font-family:'DM Sans',sans-serif;cursor:pointer;
+  transition:border-color 0.15s;display:flex;align-items:center;
+  justify-content:space-between;user-select:none;min-height:36px;
+}
+.cselect-cascade-trigger:hover{border-color:var(--border2);}
+.cselect-cascade-trigger.open{border-color:var(--purple2);border-bottom-left-radius:0;border-bottom-right-radius:0;}
+.cselect-cascade-trigger .cs-text{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.cselect-cascade-trigger .cs-text.placeholder{color:var(--text3);}
+.cselect-cascade-trigger .cs-arrow{font-size:9px;color:var(--text3);transition:transform .2s;flex-shrink:0;margin-left:6px;}
+.cselect-cascade-trigger.open .cs-arrow{transform:rotate(180deg);}
+.cselect-cascade-dropdown{
+  display:none;position:absolute;top:100%;left:0;right:0;
+  background:var(--bg3);border:1px solid var(--purple2);
+  border-top:1px solid var(--border);
+  border-bottom-left-radius:var(--radius);border-bottom-right-radius:var(--radius);
+  z-index:200;box-shadow:0 8px 24px rgba(0,0,0,.5);
+  max-height:300px;overflow-y:auto;
+}
+.cselect-cascade-dropdown.open{display:block;}
+.cselect-cascade-dropdown::-webkit-scrollbar{width:4px;}
+.cselect-cascade-dropdown::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px;}
+/* busca dentro do dropdown */
+.cascade-search-box{
+  position:sticky;top:0;background:var(--bg3);
+  padding:7px 9px;border-bottom:1px solid var(--border);z-index:1;
+}
+.cascade-search-box input{
+  width:100%;background:var(--bg);border:1px solid var(--border);
+  border-radius:6px;padding:5px 9px;font-size:12px;color:var(--text);
+  font-family:'DM Sans',sans-serif;outline:none;
+}
+.cascade-search-box input:focus{border-color:var(--purple2);}
+/* nós da cascata */
+.cascade-node{user-select:none;}
+.cascade-node-header{
+  display:flex;align-items:center;gap:7px;
+  padding:7px 12px;font-size:12px;color:var(--text2);
+  cursor:pointer;transition:background .1s;
+}
+.cascade-node-header:hover{background:rgba(255,255,255,.04);color:var(--text);}
+.cascade-node-header .cn-arrow{font-size:9px;transition:transform .18s;opacity:.45;width:10px;flex-shrink:0;}
+.cascade-node-header.expanded .cn-arrow{transform:rotate(90deg);}
+.cascade-node-header .cn-name{flex:1;}
+.cascade-node-header .cn-id{font-size:10px;color:var(--text3);margin-left:auto;flex-shrink:0;}
+.cascade-children{display:none;border-left:2px solid var(--border);margin-left:19px;}
+.cascade-children.open{display:block;}
+/* folha selecionável */
+.cascade-leaf{
+  display:flex;align-items:center;gap:7px;
+  padding:7px 12px;font-size:12px;color:var(--text2);
+  cursor:pointer;transition:background .1s;
+}
+.cascade-leaf:hover{background:rgba(139,124,248,.08);color:var(--text);}
+.cascade-leaf.selected{background:var(--purple-bg);color:var(--purple);}
+.cascade-leaf .cl-dot{width:5px;height:5px;border-radius:50%;background:var(--border2);flex-shrink:0;}
+.cascade-leaf.selected .cl-dot{background:var(--purple);}
+.cascade-leaf .cl-id{font-size:10px;color:var(--text3);margin-left:auto;flex-shrink:0;}
+.cascade-leaf.selected .cl-id{color:var(--purple3);}
+.cascade-node.hidden,.cascade-leaf.hidden{display:none;}
+.cascade-empty{padding:14px;text-align:center;font-size:12px;color:var(--text3);}
 </style>
 </head>
 <body>
 
-<!-- LOGIN -->
 <div class="login-screen" id="login-screen">
   <div class="login-box">
     <div class="login-logo">
       <div class="logo-mark" style="width:40px;height:40px">
-        <svg viewBox="0 0 18 18" fill="none">
-          <polygon points="9,2 16,6 16,12 9,16 2,12 2,6" fill="none" stroke="white" stroke-width="1.5"/>
-          <circle cx="9" cy="9" r="2.2" fill="white"/>
-        </svg>
+        <svg viewBox="0 0 18 18" fill="none"><polygon points="9,2 16,6 16,12 9,16 2,12 2,6" fill="none" stroke="white" stroke-width="1.5"/><circle cx="9" cy="9" r="2.2" fill="white"/></svg>
       </div>
       <div>
         <div class="login-title">Prisma Concursos</div>
@@ -343,55 +281,44 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'DM San
   </div>
 </div>
 
-<!-- APP -->
 <div class="app" id="app" style="display:none">
   <aside class="sidebar">
     <div class="sidebar-logo">
       <div class="logo-mark">
-        <svg viewBox="0 0 18 18" fill="none">
-          <polygon points="9,2 16,6 16,12 9,16 2,12 2,6" fill="none" stroke="white" stroke-width="1.5"/>
-          <circle cx="9" cy="9" r="2.2" fill="white"/>
-        </svg>
+        <svg viewBox="0 0 18 18" fill="none"><polygon points="9,2 16,6 16,12 9,16 2,12 2,6" fill="none" stroke="white" stroke-width="1.5"/><circle cx="9" cy="9" r="2.2" fill="white"/></svg>
       </div>
-      <div class="logo-text">
-        <div class="name">Prisma</div>
-        <div class="sub">Agente IA</div>
-      </div>
+      <div class="logo-text"><div class="name">Prisma</div><div class="sub">Agente IA</div></div>
     </div>
-
     <div class="nav-group">
       <div class="nav-label">Principal</div>
-      <div class="nav-item active" onclick="navTo(this,'painel')" data-view="painel">
+      <div class="nav-item active" onclick="navTo(this,'painel')">
         <svg viewBox="0 0 15 15" fill="none"><rect x="1" y="1" width="5" height="5" rx="1" stroke="currentColor" stroke-width="1.2"/><rect x="9" y="1" width="5" height="5" rx="1" stroke="currentColor" stroke-width="1.2"/><rect x="1" y="9" width="5" height="5" rx="1" stroke="currentColor" stroke-width="1.2"/><rect x="9" y="9" width="5" height="5" rx="1" stroke="currentColor" stroke-width="1.2"/></svg>
         Painel
       </div>
-      <div class="nav-item" onclick="navTo(this,'historico')" data-view="historico">
+      <div class="nav-item" onclick="navTo(this,'historico')">
         <svg viewBox="0 0 15 15" fill="none"><circle cx="7.5" cy="7.5" r="6" stroke="currentColor" stroke-width="1.2"/><path d="M7.5 4v3.5l2.5 1.5" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>
         Histórico
       </div>
     </div>
-
     <div class="nav-group">
       <div class="nav-label">Questões</div>
-      <div class="nav-item" onclick="navTo(this,'banco')" data-view="banco">
+      <div class="nav-item" onclick="navTo(this,'banco')">
         <svg viewBox="0 0 15 15" fill="none"><ellipse cx="7.5" cy="4" rx="5.5" ry="2" stroke="currentColor" stroke-width="1.2"/><path d="M2 4v7c0 1.1 2.46 2 5.5 2s5.5-.9 5.5-2V4" stroke="currentColor" stroke-width="1.2"/><path d="M2 7.5c0 1.1 2.46 2 5.5 2s5.5-.9 5.5-2" stroke="currentColor" stroke-width="1.2"/></svg>
         Banco de dados
       </div>
-      <div class="nav-item" onclick="navTo(this,'revisar')" data-view="revisar">
+      <div class="nav-item" onclick="navTo(this,'revisar')">
         <svg viewBox="0 0 15 15" fill="none"><path d="M7.5 1L9.5 5.5H14L10.5 8.5L12 13L7.5 10.5L3 13L4.5 8.5L1 5.5H5.5Z" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round"/></svg>
         Revisar
-        <span class="nav-badge" id="badge-revisar">3</span>
+        <span class="nav-badge" id="badge-revisar">...</span>
       </div>
     </div>
-
     <div class="nav-group">
       <div class="nav-label">Config.</div>
-      <div class="nav-item" onclick="navTo(this,'fontes')" data-view="fontes">
+      <div class="nav-item" onclick="navTo(this,'fontes')">
         <svg viewBox="0 0 15 15" fill="none"><circle cx="7.5" cy="7.5" r="2" stroke="currentColor" stroke-width="1.2"/><path d="M7.5 1v2M7.5 12v2M1 7.5h2M12 7.5h2M3.1 3.1l1.4 1.4M10.5 10.5l1.4 1.4M10.5 3.1l-1.4 1.4M4.5 10.5l-1.4 1.4" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>
         Fontes
       </div>
     </div>
-
     <div class="sidebar-bottom">
       <div class="user-card">
         <div class="user-avatar" id="user-avatar">P</div>
@@ -412,33 +339,15 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'DM San
       </div>
     </div>
 
-    <!-- VIEW: PAINEL -->
+    <!-- PAINEL -->
     <div class="content" id="view-painel">
       <div class="metrics">
-        <div class="metric">
-          <div class="metric-label">Total no banco</div>
-          <div class="metric-value" id="m-total">—</div>
-          <div class="metric-delta">questões cadastradas</div>
-        </div>
-        <div class="metric">
-          <div class="metric-label">Inseridas hoje</div>
-          <div class="metric-value" id="m-hoje">0</div>
-          <div class="metric-delta" id="m-hoje-d">nenhuma ainda</div>
-        </div>
-        <div class="metric">
-          <div class="metric-label">Descartadas</div>
-          <div class="metric-value" id="m-desc">0</div>
-          <div class="metric-delta">duplicatas / inválidas</div>
-        </div>
-        <div class="metric">
-          <div class="metric-label">Última execução</div>
-          <div class="metric-value" style="font-size:15px;padding-top:5px" id="m-ultima">—</div>
-          <div class="metric-delta" id="m-ultima-d">—</div>
-        </div>
+        <div class="metric"><div class="metric-label">Total no banco</div><div class="metric-value" id="m-total">—</div><div class="metric-delta">questões cadastradas</div></div>
+        <div class="metric"><div class="metric-label">Inseridas hoje</div><div class="metric-value" id="m-hoje">—</div><div class="metric-delta" id="m-hoje-d">—</div></div>
+        <div class="metric"><div class="metric-label">Total de provas</div><div class="metric-value" id="m-provas">—</div><div class="metric-delta">provas cadastradas</div></div>
+        <div class="metric"><div class="metric-label">Última execução</div><div class="metric-value" style="font-size:15px;padding-top:5px" id="m-ultima">—</div><div class="metric-delta" id="m-ultima-d">—</div></div>
       </div>
-
       <div class="grid">
-        <!-- COLUNA ESQUERDA -->
         <div>
           <div class="card">
             <div class="card-title">Configurar busca</div>
@@ -447,48 +356,16 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'DM San
               <button class="tab" onclick="switchTab('prova',this)">Por prova completa</button>
               <button class="tab" onclick="switchTab('auditoria',this)">Auditar base</button>
             </div>
-
-            <!-- ABA TEMÁTICA -->
             <div class="tab-panel active" id="panel-tematica">
-              <div class="form-row">
-                <div class="form-group">
-                  <label>Disciplina</label>
-                  <select id="disciplina">
-                    <option>Direito Constitucional</option>
-                    <option>Direito Administrativo</option>
-                    <option>Direito Penal</option>
-                    <option>Português</option>
-                    <option>Raciocínio Lógico</option>
-                    <option>Informática</option>
-                    <option>Administração Pública</option>
-                    <option>Matemática Financeira</option>
-                    <option>Contabilidade</option>
-                  </select>
-                </div>
-                <div class="form-group">
-                  <label>Banca</label>
-                  <select id="banca">
-                    <option>Todas as bancas</option>
-                    <option>CESPE / Cebraspe</option>
-                    <option>FGV</option>
-                    <option>FCC</option>
-                    <option>VUNESP</option>
-                    <option>IBFC</option>
-                    <option>Quadrix</option>
-                    <option>AOCP</option>
-                    <option>CONSULPLAN</option>
-                  </select>
+              <!-- dropdowns dinâmicos gerados pelo JS conforme raízes do BD -->
+              <div id="filtros-dinamicos" class="filtros-dinamicos-grid">
+                <div class="form-group" style="grid-column:1/-1">
+                  <span style="font-size:12px;color:var(--text3)">Carregando filtros...</span>
                 </div>
               </div>
-              <div class="form-row">
-                <div class="form-group">
-                  <label>Ano inicial</label>
-                  <input type="number" id="ano-ini" value="2018" min="2000" max="2025"/>
-                </div>
-                <div class="form-group">
-                  <label>Limite de questões</label>
-                  <input type="number" id="limite" value="200" min="10" max="1000"/>
-                </div>
+              <div class="form-row" style="margin-top:4px">
+                <div class="form-group"><label>Ano inicial</label><input type="number" id="ano-ini" value="2018" min="2000" max="2025"/></div>
+                <div class="form-group"><label>Limite de questões</label><input type="number" id="limite" value="200" min="10" max="1000"/></div>
               </div>
               <div class="section-lbl">Nível do cargo</div>
               <div class="tags">
@@ -512,58 +389,50 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'DM San
                 Iniciar busca temática
               </button>
             </div>
-
-            <!-- ABA PROVA -->
             <div class="tab-panel" id="panel-prova">
               <div class="form-row-4">
-                <div class="form-group">
-                  <label>Banca</label>
-                  <select id="p-banca">
-                    <option>CESPE</option><option>FGV</option><option>FCC</option>
-                    <option>VUNESP</option><option>IBFC</option><option>Quadrix</option>
-                  </select>
+                <div class="form-group"><label>Banca</label>
+                  <input type="hidden" id="p-banca" value="CESPE"/>
+                  <div class="cselect-wrap" id="p-banca-wrap">
+                    <div class="cselect-trigger" id="p-banca-trigger" onclick="toggleCSelect('p-banca')">
+                      <span class="cs-text" id="p-banca-display">CESPE</span>
+                      <span class="cs-arrow">&#9660;</span>
+                    </div>
+                    <div class="cselect-dropdown" id="p-banca-dropdown">
+                      <div class="cselect-search">
+                        <input type="text" id="p-banca-search" placeholder="&#128269; Buscar banca..." oninput="filtrarCSelect('p-banca',this.value)" autocomplete="off"/>
+                      </div>
+                      <div class="cselect-list" id="p-banca-list">
+                        <div class="cselect-empty">Carregando...</div>
+                      </div>
+                    </div>
+                  </div>
                 </div>
-                <div class="form-group">
-                  <label>Órgão</label>
-                  <input type="text" id="p-orgao" placeholder="Ex: TRF 1ª Região"/>
-                </div>
-                <div class="form-group">
-                  <label>Cargo</label>
-                  <input type="text" id="p-cargo" placeholder="Ex: Analista Judiciário"/>
-                </div>
-                <div class="form-group">
-                  <label>Ano</label>
-                  <input type="number" id="p-ano" value="2023" min="2000" max="2025"/>
-                </div>
+                <div class="form-group"><label>Órgão</label><input type="text" id="p-orgao" placeholder="Ex: TRF 1ª Região"/></div>
+                <div class="form-group"><label>Cargo</label><input type="text" id="p-cargo" placeholder="Ex: Analista Judiciário"/></div>
+                <div class="form-group"><label>Ano</label><input type="number" id="p-ano" value="2023" min="2000" max="2025"/></div>
               </div>
               <button class="btn btn-secondary" style="margin-bottom:12px" onclick="addProva()">
                 <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><line x1="6" y1="1" x2="6" y2="11" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><line x1="1" y1="6" x2="11" y2="6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
                 Adicionar à fila
               </button>
               <div class="section-lbl">Fila de provas</div>
-              <div id="prova-queue">
-                <div class="empty-q" id="empty-prova">Nenhuma prova na fila. Preencha e adicione acima.</div>
-              </div>
+              <div id="prova-queue"><div class="empty-q">Nenhuma prova na fila.</div></div>
               <button class="btn btn-primary" id="btn-prova" onclick="iniciar('prova')" disabled>
                 <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><polygon points="3,1 13,7 3,13" fill="white"/></svg>
                 Processar fila de provas
               </button>
             </div>
-
-            <!-- ABA AUDITORIA -->
             <div class="tab-panel" id="panel-auditoria">
               <div class="form-row">
-                <div class="form-group">
-                  <label>Verificar</label>
-                  <select>
-                    <option>Todas as questões</option>
-                    <option>Últimas 500 inseridas</option>
-                    <option>Por disciplina</option>
-                    <option>Com gabarito suspeito</option>
+                <div class="form-group"><label>Verificar</label>
+                  <select id="audit-tipo">
+                    <option value="todas">Todas as questões</option>
+                    <option value="500">Últimas 500 inseridas</option>
+                    <option value="gabarito">Com gabarito suspeito</option>
                   </select>
                 </div>
-                <div class="form-group">
-                  <label>Ação ao encontrar erro</label>
+                <div class="form-group"><label>Ação ao encontrar erro</label>
                   <select>
                     <option>Corrigir automaticamente</option>
                     <option>Sinalizar para revisão</option>
@@ -579,173 +448,560 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'DM San
                 <span class="tag" onclick="this.classList.toggle('active')">Encoding</span>
                 <span class="tag" onclick="this.classList.toggle('active')">Classificação</span>
               </div>
-              <button class="btn btn-teal" id="btn-audit" onclick="iniciar('auditoria')">
+              <button class="btn btn-teal" id="btn-audit" onclick="iniciarAuditoria()">
                 <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><circle cx="7" cy="7" r="5.5" stroke="currentColor" stroke-width="1.2"/><path d="M4.5 7l2 2 3-3" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
                 Iniciar auditoria da base
               </button>
             </div>
           </div>
         </div>
-
-        <!-- COLUNA DIREITA -->
         <div style="display:flex;flex-direction:column;gap:16px">
           <div class="card">
             <div class="card-title">Progresso</div>
-            <div class="progress-label">
-              <span id="prog-label">Aguardando início</span>
-              <span id="prog-pct">0%</span>
-            </div>
-            <div class="progress-bar">
-              <div class="progress-fill" id="prog-fill" style="width:0%"></div>
-            </div>
-            <div class="log" id="log">
-              <div class="log-line"><span class="log-time">--:--:--</span><span>Agente pronto. Configure e inicie.</span></div>
-            </div>
+            <div class="progress-label"><span id="prog-label">Aguardando início</span><span id="prog-pct">0%</span></div>
+            <div class="progress-bar"><div class="progress-fill" id="prog-fill" style="width:0%"></div></div>
+            <div class="log" id="log"><div class="log-line"><span class="log-time">--:--:--</span><span>Agente pronto.</span></div></div>
           </div>
-
           <div class="card">
             <div class="card-title">Sinalizadas para revisão</div>
-            <div class="audit-item">
-              <span class="abadge abadge-err">Gabarito</span>
-              <div>
-                <div class="atext">Questão #4821 — CESPE 2022</div>
-                <div class="asub">Alternativa correta ausente</div>
-              </div>
-            </div>
-            <div class="audit-item">
-              <span class="abadge abadge-warn">Duplicata</span>
-              <div>
-                <div class="atext">Questão #3902 ≈ #4105</div>
-                <div class="asub">92% de similaridade detectada</div>
-              </div>
-            </div>
-            <div class="audit-item">
-              <span class="abadge abadge-warn">Encoding</span>
-              <div>
-                <div class="atext">Questão #5217 — FGV 2021</div>
-                <div class="asub">Caracteres corrompidos no enunciado</div>
-              </div>
-            </div>
+            <div id="audit-preview"><div class="empty-state">Rode a auditoria para ver questões sinalizadas.</div></div>
           </div>
         </div>
       </div>
     </div>
 
-    <!-- VIEW: OUTRAS (placeholder) -->
+    <!-- HISTÓRICO -->
     <div class="content" id="view-historico" style="display:none">
-      <div class="card" style="max-width:500px">
-        <div class="card-title">Histórico de execuções</div>
-        <p style="color:var(--text3);font-size:13px">Disponível após a primeira execução do agente.</p>
+      <div class="card">
+        <div class="card-title">Histórico de inserções por dia</div>
+        <div id="hist-content"><div class="empty-state"><span class="spinner"></span>Carregando...</div></div>
       </div>
     </div>
+
+    <!-- BANCO -->
     <div class="content" id="view-banco" style="display:none">
-      <div class="card" style="max-width:500px">
-        <div class="card-title">Banco de dados</div>
-        <p style="color:var(--text3);font-size:13px">Métricas detalhadas disponíveis em breve.</p>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+        <div class="card">
+          <div class="card-title">Estatísticas gerais</div>
+          <div id="banco-stats"><div class="empty-state"><span class="spinner"></span>Carregando...</div></div>
+        </div>
+        <div class="card">
+          <div class="card-title">Saúde da base</div>
+          <div id="banco-saude"><div class="empty-state"><span class="spinner"></span>Carregando...</div></div>
+        </div>
       </div>
     </div>
+
+    <!-- REVISAR -->
     <div class="content" id="view-revisar" style="display:none">
-      <div class="card" style="max-width:500px">
+      <div class="card">
         <div class="card-title">Questões para revisão humana</div>
-        <p style="color:var(--text3);font-size:13px">As questões sinalizadas pela auditoria aparecerão aqui.</p>
+        <div id="revisar-content"><div class="empty-state"><span class="spinner"></span>Carregando...</div></div>
       </div>
     </div>
+
+    <!-- FONTES -->
     <div class="content" id="view-fontes" style="display:none">
       <div class="card" style="max-width:500px">
-        <div class="card-title">Configuração de fontes</div>
-        <p style="color:var(--text3);font-size:13px">Gerencie os sites-fonte do agente aqui.</p>
+        <div class="card-title">Fontes configuradas</div>
+        <div class="stat-row"><span class="stat-label">PCI Concursos</span><span class="abadge abadge-ok">Ativo</span></div>
+        <div class="stat-row"><span class="stat-label">CESPE / Cebraspe oficial</span><span class="abadge abadge-ok">Ativo</span></div>
+        <div class="stat-row"><span class="stat-label">FGV Projetos</span><span class="abadge abadge-ok">Ativo</span></div>
+        <div class="stat-row"><span class="stat-label">VUNESP</span><span class="abadge abadge-ok">Ativo</span></div>
+        <div class="stat-row"><span class="stat-label">Diário Oficial (PDF)</span><span class="abadge abadge-warn">Em breve</span></div>
+        <div class="stat-row"><span class="stat-label">FCC</span><span class="abadge abadge-warn">Em breve</span></div>
       </div>
     </div>
   </div>
 </div>
 
 <script>
-const API = window.PRISMA_API_URL || 'https://web-production-cc8e1.up.railway.app'
+const API = 'https://web-production-cc8e1.up.railway.app'
 let usuario = null
 let provas = []
 let running = false
-let step = 0
+let historicoExecucoes = []
 
-// ── LOGIN ──────────────────────────────────────
+// ── LOGIN ──
 async function fazerLogin() {
   const login = document.getElementById('l-login').value.trim()
   const senha = document.getElementById('l-senha').value
-  const err   = document.getElementById('l-err')
+  const err = document.getElementById('l-err')
   err.style.display = 'none'
-
   try {
     const res = await fetch(`${API}/auth/login`, {
-      method: 'POST',
-      headers: {'Content-Type':'application/json'},
+      method:'POST', headers:{'Content-Type':'application/json'},
       body: JSON.stringify({login, senha})
     })
-    if (!res.ok) { err.style.display = 'block'; return }
+    if (!res.ok) { err.style.display='block'; return }
     const data = await res.json()
     usuario = data.usuario
     document.getElementById('login-screen').style.display = 'none'
     document.getElementById('app').style.display = 'flex'
-    document.getElementById('user-name').textContent = usuario.nome || usuario.login
+    document.getElementById('user-name').textContent = usuario.nome || login
     document.getElementById('user-role').textContent = usuario.cargo || 'Administrador'
-    document.getElementById('user-avatar').textContent = (usuario.nome || 'P')[0].toUpperCase()
-    carregarMetricas()
-    verificarStatus()
+    document.getElementById('user-avatar').textContent = (usuario.nome || login)[0].toUpperCase()
+    carregarTudo()
   } catch(e) {
     err.textContent = 'Erro de conexão com o servidor.'
     err.style.display = 'block'
   }
 }
-
-document.getElementById('l-senha').addEventListener('keydown', e => {
-  if (e.key === 'Enter') fazerLogin()
+document.addEventListener('DOMContentLoaded', () => {
+  document.getElementById('l-senha').addEventListener('keydown', e => { if(e.key==='Enter') fazerLogin() })
 })
 
-// ── STATUS ────────────────────────────────────
+// ── CARREGAR TUDO ──
+async function carregarTudo() {
+  verificarStatus()
+  await carregarMetricas()
+  await Promise.all([carregarAssuntos(), carregarBancas()])
+  await carregarAuditoriaResumo()
+}
+
 async function verificarStatus() {
   try {
     const res = await fetch(`${API}/status`)
     const data = await res.json()
-    const dot  = document.getElementById('status-dot')
-    const txt  = document.getElementById('status-text')
-    if (data.banco === 'conectado') {
-      dot.className = 'dot online'
-      txt.textContent = 'Banco conectado'
-    } else {
-      dot.className = 'dot'
-      txt.textContent = 'Banco desconectado'
-    }
-  } catch(e) {
-    document.getElementById('status-text').textContent = 'API offline'
-  }
+    const dot = document.getElementById('status-dot')
+    const txt = document.getElementById('status-text')
+    if (data.banco === 'conectado') { dot.className='dot online'; txt.textContent='Banco conectado' }
+    else { dot.className='dot'; txt.textContent='Banco desconectado' }
+  } catch(e) { document.getElementById('status-text').textContent='API offline' }
 }
 
-// ── MÉTRICAS ─────────────────────────────────
 async function carregarMetricas() {
   try {
     const res = await fetch(`${API}/agente/metricas`)
     const d = await res.json()
     document.getElementById('m-total').textContent = (d.total_questoes||0).toLocaleString('pt-BR')
     document.getElementById('m-hoje').textContent = d.inseridas_hoje || 0
+    document.getElementById('m-provas').textContent = (d.total_provas||0).toLocaleString('pt-BR')
     if (d.inseridas_hoje > 0) {
       document.getElementById('m-hoje-d').textContent = `+${d.inseridas_hoje} hoje`
       document.getElementById('m-hoje-d').classList.add('up')
+    } else {
+      document.getElementById('m-hoje-d').textContent = 'nenhuma ainda'
+    }
+    if (d.historico_7dias && d.historico_7dias.length > 0) {
+      historicoExecucoes = d.historico_7dias
     }
   } catch(e) {}
 }
 
-// ── NAV ───────────────────────────────────────
-const titles = {
-  painel:'Painel do agente', historico:'Histórico de execuções',
-  banco:'Banco de dados', revisar:'Questões para revisão', fontes:'Configuração de fontes'
+// ── FILTROS DINÂMICOS EM CASCATA ──
+let todosAssuntos = []
+// Mapa: raizId -> { value, label } selecionado
+const filtrosSelecionados = {}
+// byId e children globais (montados após carregar)
+let _byId = {}, _children = {}
+// wraps abertos (para fechar ao clicar fora)
+const cascadeAbertos = new Set()
+
+function escHtml(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')
 }
+
+async function carregarAssuntos() {
+  try {
+    const res = await fetch(`${API}/agente/assuntos`)
+    const d   = await res.json()
+    todosAssuntos = d.assuntos || []
+    montarMapas(todosAssuntos)
+    gerarFiltrosDinamicos()
+    // também reconstrói o select de p-banca (aba por prova completa)
+    popularPBanca()
+  } catch(e) {
+    document.getElementById('filtros-dinamicos').innerHTML =
+      '<div style="font-size:12px;color:var(--red)">Erro ao carregar filtros.</div>'
+  }
+}
+
+async function carregarBancas() { /* bancas vêm junto com assuntos */ }
+
+function montarMapas(nos) {
+  _byId = {}; _children = {}
+  nos.forEach(n => {
+    _byId[n.id] = n
+    const pk = n.id_pai == null ? 'null' : String(n.id_pai)
+    if (!_children[pk]) _children[pk] = []
+    _children[pk].push(n.id)
+  })
+}
+
+// ── Gera um dropdown por raiz (id_assunto = null) ──
+function gerarFiltrosDinamicos() {
+  const grid = document.getElementById('filtros-dinamicos')
+  grid.innerHTML = ''
+  const raizes = (_children['null'] || []).map(id => _byId[id]).filter(Boolean)
+  if (!raizes.length) {
+    grid.innerHTML = '<div style="font-size:12px;color:var(--text3)">Nenhum filtro disponível.</div>'
+    return
+  }
+  raizes.forEach(raiz => criarDropdownCascata(grid, raiz))
+}
+
+function criarDropdownCascata(container, raiz) {
+  const key = 'f' + raiz.id   // chave única por raiz
+
+  const wrap = document.createElement('div')
+  wrap.className = 'form-group'
+  wrap.innerHTML = `
+    <label>${escHtml(raiz.nome)}</label>
+    <div class="cselect-cascade-wrap" id="cw-${key}">
+      <div class="cselect-cascade-trigger" id="ct-${key}" onclick="toggleCascade('${key}')">
+        <span class="cs-text placeholder" id="cd-${key}">Selecione...</span>
+        <span class="cs-arrow">&#9660;</span>
+      </div>
+      <div class="cselect-cascade-dropdown" id="cdd-${key}">
+        <div class="cascade-search-box">
+          <input type="text" id="cs-${key}" placeholder="&#128269; Buscar..."
+            oninput="filtrarCascade('${key}', this.value)" autocomplete="off"/>
+        </div>
+        <div id="cl-${key}"></div>
+      </div>
+    </div>
+  `
+  container.appendChild(wrap)
+
+  // Renderiza a árvore de filhos dentro do dropdown
+  const lista = wrap.querySelector('#cl-' + key)
+  const filhos = _children[String(raiz.id)] || []
+  if (!filhos.length) {
+    lista.innerHTML = '<div class="cascade-empty">Sem itens cadastrados.</div>'
+  } else {
+    filhos.forEach(fid => lista.appendChild(renderCascadeNo(fid, key, 0)))
+  }
+}
+
+function renderCascadeNo(id, key, depth) {
+  const node = _byId[id]
+  if (!node) return document.createTextNode('')
+  const kids = _children[String(id)] || []
+  const isLeaf = kids.length === 0
+
+  const wrapper = document.createElement('div')
+  wrapper.dataset.search = node.nome.toLowerCase()
+
+  if (isLeaf) {
+    wrapper.className = 'cascade-leaf'
+    wrapper.style.paddingLeft = (12 + depth * 14) + 'px'
+    wrapper.innerHTML = `
+      <span class="cl-dot"></span>
+      <span>${escHtml(node.nome)}</span>
+      <span class="cl-id">[${node.id}]</span>
+    `
+    wrapper.onclick = () => selecionarCascade(key, node.id, node.nome, wrapper)
+  } else {
+    wrapper.className = 'cascade-node'
+    const header = document.createElement('div')
+    header.className = 'cascade-node-header'
+    header.style.paddingLeft = (12 + depth * 14) + 'px'
+    header.innerHTML = `
+      <span class="cn-arrow">&#9658;</span>
+      <span class="cn-name">${escHtml(node.nome)}</span>
+      <span class="cn-id">[${node.id}]</span>
+    `
+    const childWrap = document.createElement('div')
+    childWrap.className = 'cascade-children'
+
+    header.onclick = () => {
+      const open = childWrap.classList.toggle('open')
+      header.classList.toggle('expanded', open)
+    }
+    kids.forEach(kid => childWrap.appendChild(renderCascadeNo(kid, key, depth + 1)))
+    wrapper.appendChild(header)
+    wrapper.appendChild(childWrap)
+  }
+  return wrapper
+}
+
+function selecionarCascade(key, id, nome, leafEl) {
+  const dropdown = document.getElementById('cdd-' + key)
+  dropdown.querySelectorAll('.cascade-leaf').forEach(l => l.classList.remove('selected'))
+  leafEl.classList.add('selected')
+
+  filtrosSelecionados[key] = { id, nome }
+
+  const disp = document.getElementById('cd-' + key)
+  if (disp) { disp.textContent = '[' + id + '] ' + nome; disp.classList.remove('placeholder') }
+
+  fecharCascade(key)
+  // limpa busca
+  const s = document.getElementById('cs-' + key)
+  if (s) { s.value = ''; filtrarCascade(key, '') }
+}
+
+function toggleCascade(key) {
+  const dropdown = document.getElementById('cdd-' + key)
+  const trigger  = document.getElementById('ct-' + key)
+  if (!dropdown) return
+  const isOpen = dropdown.classList.toggle('open')
+  trigger.classList.toggle('open', isOpen)
+  // fecha outros
+  cascadeAbertos.forEach(k => { if (k !== key) fecharCascade(k) })
+  if (isOpen) {
+    cascadeAbertos.add(key)
+    setTimeout(() => { const s = document.getElementById('cs-' + key); if (s) s.focus() }, 50)
+  } else {
+    cascadeAbertos.delete(key)
+  }
+}
+
+function fecharCascade(key) {
+  const d = document.getElementById('cdd-' + key)
+  const t = document.getElementById('ct-' + key)
+  if (d) d.classList.remove('open')
+  if (t) t.classList.remove('open')
+  cascadeAbertos.delete(key)
+}
+
+function filtrarCascade(key, query) {
+  const q = query.trim().toLowerCase()
+  const lista = document.getElementById('cl-' + key)
+  if (!lista) return
+
+  // Função recursiva: mostra o nó se ele ou algum descendente bate
+  function processar(el) {
+    if (el.classList.contains('cascade-leaf')) {
+      const bate = !q || (el.dataset.search || '').includes(q)
+      el.classList.toggle('hidden', !bate)
+      return bate
+    }
+    if (el.classList.contains('cascade-node')) {
+      const childWrap = el.querySelector(':scope > .cascade-children')
+      let algumVisivel = false
+      if (childWrap) {
+        Array.from(childWrap.children).forEach(child => {
+          if (processar(child)) algumVisivel = true
+        })
+      }
+      el.classList.toggle('hidden', !algumVisivel)
+      if (q && algumVisivel) {
+        childWrap && childWrap.classList.add('open')
+        const h = el.querySelector('.cascade-node-header')
+        h && h.classList.add('expanded')
+      } else if (!q) {
+        childWrap && childWrap.classList.remove('open')
+        const h = el.querySelector('.cascade-node-header')
+        h && h.classList.remove('expanded')
+      }
+      return algumVisivel
+    }
+    return false
+  }
+
+  Array.from(lista.children).forEach(child => processar(child))
+}
+
+// Fecha ao clicar fora
+document.addEventListener('click', e => {
+  cascadeAbertos.forEach(key => {
+    const wrap = document.getElementById('cw-' + key)
+    if (wrap && !wrap.contains(e.target)) fecharCascade(key)
+  })
+})
+
+// Popula o select de banca da aba "Por prova completa"
+function popularPBanca() {
+  // Encontra raiz cuja árvore contém bancas (raiz com nome contendo "banca")
+  const raizes = (_children['null'] || []).map(id => _byId[id]).filter(Boolean)
+  const raizBanca = raizes.find(r => (r.nome || '').toLowerCase().includes('banca'))
+  if (!raizBanca) return
+
+  const filhos = (_children[String(raizBanca.id)] || []).map(id => _byId[id]).filter(Boolean)
+  if (!filhos.length) return
+
+  const list = document.getElementById('p-banca-list')
+  const hidden = document.getElementById('p-banca')
+  const disp = document.getElementById('p-banca-display')
+  if (!list) return
+
+  list.innerHTML = ''
+  filhos.forEach(b => {
+    const el = document.createElement('div')
+    el.className = 'cselect-item'
+    el.dataset.value = b.nome
+    el.dataset.search = b.nome.toLowerCase()
+    el.innerHTML = `<span class="cs-id">[${b.id}]</span><span>${escHtml(b.nome)}</span>`
+    el.onclick = () => {
+      list.querySelectorAll('.cselect-item').forEach(i => i.classList.remove('selected'))
+      el.classList.add('selected')
+      if (hidden) hidden.value = b.nome
+      if (disp) { disp.textContent = `[${b.id}] ${b.nome}`; disp.classList.remove('placeholder') }
+      fecharCSelect('p-banca')
+    }
+    list.appendChild(el)
+  })
+  // seleciona o primeiro por default
+  const primeiro = filhos[0]
+  if (primeiro) {
+    if (hidden) hidden.value = primeiro.nome
+    if (disp) { disp.textContent = `[${primeiro.id}] ${primeiro.nome}`; disp.classList.remove('placeholder') }
+    list.children[0] && list.children[0].classList.add('selected')
+  }
+}
+
+// p-banca ainda usa o cselect antigo para o trigger (mantém compatibilidade)
+const _cselectPBancaAberto = { open: false }
+function toggleCSelect(key) {
+  const dropdown = document.getElementById(key + '-dropdown')
+  const trigger  = document.getElementById(key + '-trigger')
+  if (!dropdown) return
+  const isOpen = dropdown.classList.toggle('open')
+  trigger.classList.toggle('open', isOpen)
+}
+function fecharCSelect(key) {
+  const d = document.getElementById(key + '-dropdown')
+  const t = document.getElementById(key + '-trigger')
+  if (d) d.classList.remove('open')
+  if (t) t.classList.remove('open')
+}
+function filtrarCSelect(key, query) {
+  const q = query.trim().toLowerCase()
+  const list = document.getElementById(key + '-list')
+  if (!list) return
+  list.querySelectorAll('.cselect-item').forEach(el => {
+    el.classList.toggle('hidden', q !== '' && !(el.dataset.search || '').includes(q))
+  })
+}
+document.addEventListener('click', e => {
+  ['p-banca'].forEach(key => {
+    const wrap = document.getElementById(key + '-wrap')
+    if (wrap && !wrap.contains(e.target)) fecharCSelect(key)
+  })
+})
+
+
+
+async function carregarAuditoriaResumo() {
+  try {
+    const res = await fetch(`${API}/auditoria/resumo`)
+    const d = await res.json()
+    const total = (d.sem_gabarito || 0) + (d.enunciado_curto || 0)
+    document.getElementById('badge-revisar').textContent = total || '0'
+  } catch(e) {}
+}
+
+// ── NAV ──
+const titles = {painel:'Painel do agente',historico:'Histórico de inserções',banco:'Banco de dados',revisar:'Questões para revisão',fontes:'Configuração de fontes'}
 function navTo(el, view) {
   document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'))
-  document.querySelectorAll('.content').forEach(c => c.style.display = 'none')
+  document.querySelectorAll('.content').forEach(c => c.style.display='none')
   el.classList.add('active')
   document.getElementById('view-'+view).style.display = 'block'
   document.getElementById('topbar-title').textContent = titles[view] || ''
+  if (view === 'historico') carregarHistorico()
+  if (view === 'banco') carregarBanco()
+  if (view === 'revisar') carregarRevisar()
 }
 
-// ── TABS ──────────────────────────────────────
+// ── HISTÓRICO ──
+async function carregarHistorico() {
+  const el = document.getElementById('hist-content')
+  try {
+    const res = await fetch(`${API}/agente/metricas`)
+    const d = await res.json()
+    const hist = d.historico_7dias || []
+    if (!hist.length) {
+      el.innerHTML = '<div class="empty-state">Nenhuma inserção nos últimos 7 dias.</div>'
+      return
+    }
+    el.innerHTML = hist.map(h => `
+      <div class="hist-item">
+        <div>
+          <div class="hist-info">${h.dia}</div>
+          <div class="hist-sub">questões inseridas</div>
+        </div>
+        <div style="text-align:right">
+          <div class="hist-num">${h.qtd}</div>
+          <div class="hist-num-label">questões</div>
+        </div>
+      </div>
+    `).join('')
+  } catch(e) {
+    el.innerHTML = '<div class="empty-state">Erro ao carregar histórico.</div>'
+  }
+}
+
+// ── BANCO ──
+async function carregarBanco() {
+  try {
+    const [mRes, aRes] = await Promise.all([
+      fetch(`${API}/agente/metricas`),
+      fetch(`${API}/auditoria/resumo`)
+    ])
+    const m = await mRes.json()
+    const a = await aRes.json()
+
+    document.getElementById('banco-stats').innerHTML = `
+      <div class="stat-row"><span class="stat-label">Total de questões</span><span class="stat-value">${(m.total_questoes||0).toLocaleString('pt-BR')}</span></div>
+      <div class="stat-row"><span class="stat-label">Total de provas</span><span class="stat-value">${(m.total_provas||0).toLocaleString('pt-BR')}</span></div>
+      <div class="stat-row"><span class="stat-label">Inseridas hoje</span><span class="stat-value">${m.inseridas_hoje||0}</span></div>
+    `
+
+    const saude = a.saude_pct || 0
+    const cor = saude >= 90 ? 'var(--teal)' : saude >= 70 ? 'var(--amber)' : 'var(--red)'
+    document.getElementById('banco-saude').innerHTML = `
+      <div style="text-align:center;padding:20px 0">
+        <div style="font-family:'Syne',sans-serif;font-size:48px;font-weight:700;color:${cor}">${saude}%</div>
+        <div style="font-size:12px;color:var(--text3);margin-top:4px">saúde da base</div>
+      </div>
+      <div class="stat-row"><span class="stat-label">Sem gabarito</span><span class="stat-value" style="color:var(--red)">${a.sem_gabarito||0}</span></div>
+      <div class="stat-row"><span class="stat-label">Enunciado curto</span><span class="stat-value" style="color:var(--amber)">${a.enunciado_curto||0}</span></div>
+      <div class="stat-row"><span class="stat-label">Total verificado</span><span class="stat-value">${(a.total||0).toLocaleString('pt-BR')}</span></div>
+    `
+  } catch(e) {
+    document.getElementById('banco-stats').innerHTML = '<div class="empty-state">Erro ao carregar.</div>'
+  }
+}
+
+// ── REVISAR ──
+async function carregarRevisar() {
+  const el = document.getElementById('revisar-content')
+  el.innerHTML = '<div class="empty-state"><span class="spinner"></span>Carregando questões...</div>'
+  try {
+    const [gRes, dRes] = await Promise.all([
+      fetch(`${API}/auditoria/verificar-gabaritos?limite=200`),
+      fetch(`${API}/auditoria/verificar-duplicatas?limite=500`)
+    ])
+    const g = await gRes.json()
+    const d = await dRes.json()
+
+    const itens = []
+    g.lista.forEach(p => itens.push({id: p.id, tipo: 'Gabarito', classe: 'abadge-err', desc: p.descricao}))
+    d.lista.forEach(p => itens.push({id: p.id_1, tipo: 'Duplicata', classe: 'abadge-warn', desc: `Similar à questão #${p.id_2} — verifique manualmente`}))
+
+    document.getElementById('badge-revisar').textContent = itens.length || '0'
+
+    if (!itens.length) {
+      el.innerHTML = '<div class="empty-state">Nenhuma questão precisa de revisão. Base saudável!</div>'
+      return
+    }
+
+    el.innerHTML = itens.slice(0, 50).map(item => `
+      <div class="revisar-item">
+        <div class="revisar-header">
+          <span class="abadge ${item.classe}">${item.tipo}</span>
+          <span class="revisar-id">Questão #${item.id}</span>
+        </div>
+        <div class="revisar-texto">${item.desc}</div>
+        <div class="revisar-actions">
+          <button class="btn-sm btn-sm-ok" onclick="this.closest('.revisar-item').remove()">Marcar resolvida</button>
+          <button class="btn-sm btn-sm-skip" onclick="this.closest('.revisar-item').style.opacity='0.4'">Ignorar</button>
+        </div>
+      </div>
+    `).join('')
+
+    if (itens.length > 50) {
+      el.innerHTML += `<div class="empty-state" style="margin-top:12px">Mostrando 50 de ${itens.length} questões.</div>`
+    }
+  } catch(e) {
+    el.innerHTML = '<div class="empty-state">Erro ao carregar questões para revisão.</div>'
+  }
+}
+
+// ── TABS ──
 function switchTab(name, el) {
   document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'))
   document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'))
@@ -753,43 +1009,28 @@ function switchTab(name, el) {
   document.getElementById('panel-'+name).classList.add('active')
 }
 
-// ── FILA DE PROVAS ────────────────────────────
+// ── FILA PROVAS ──
 function addProva() {
   const orgao = document.getElementById('p-orgao').value.trim()
   const cargo = document.getElementById('p-cargo').value.trim()
   if (!orgao || !cargo) return
-  const banca = document.getElementById('p-banca').value
-  const ano   = document.getElementById('p-ano').value
-  provas.push({id: Date.now(), banca, orgao, cargo, ano})
+  provas.push({id:Date.now(), banca:document.getElementById('p-banca').value, orgao, cargo, ano:document.getElementById('p-ano').value})
   renderFila()
   document.getElementById('p-orgao').value = ''
   document.getElementById('p-cargo').value = ''
 }
-function remProva(id) {
-  provas = provas.filter(p => p.id !== id)
-  renderFila()
-}
+function remProva(id) { provas = provas.filter(p => p.id !== id); renderFila() }
 function renderFila() {
   const c = document.getElementById('prova-queue')
-  if (!provas.length) {
-    c.innerHTML = '<div class="empty-q" id="empty-prova">Nenhuma prova na fila.</div>'
-    document.getElementById('btn-prova').disabled = true
-    return
-  }
-  c.innerHTML = ''
-  provas.forEach(p => {
-    const d = document.createElement('div')
-    d.className = 'queue-item'
-    d.innerHTML = `<div><div class="qi-title">${p.orgao} — ${p.cargo}</div><div class="qi-sub">${p.banca} · ${p.ano}</div></div><button class="qi-rm" onclick="remProva(${p.id})">×</button>`
-    c.appendChild(d)
-  })
+  if (!provas.length) { c.innerHTML='<div class="empty-q">Nenhuma prova na fila.</div>'; document.getElementById('btn-prova').disabled=true; return }
+  c.innerHTML = provas.map(p => `<div class="queue-item"><div><div class="qi-title">${p.orgao} — ${p.cargo}</div><div class="qi-sub">${p.banca} · ${p.ano}</div></div><button class="qi-rm" onclick="remProva(${p.id})">×</button></div>`).join('')
   document.getElementById('btn-prova').disabled = false
 }
 
-// ── LOG ───────────────────────────────────────
+// ── LOG ──
 function now() { return new Date().toTimeString().slice(0,8) }
 function addLog(tipo, msg) {
-  const log  = document.getElementById('log')
+  const log = document.getElementById('log')
   const line = document.createElement('div')
   line.className = 'log-line'
   line.innerHTML = `<span class="log-time">${now()}</span><span class="log-${tipo}">${msg}</span>`
@@ -797,103 +1038,154 @@ function addLog(tipo, msg) {
   log.scrollTop = log.scrollHeight
 }
 
-// ── STEPS SIMULADOS (até a API estar ao vivo) ──
-const stepSets = {
-  tematica: [
-    {pct:8,  t:'info', m:'Conectando ao banco MySQL da Locaweb...'},
-    {pct:16, t:'ok',   m:'Conexão estabelecida com sucesso.'},
-    {pct:26, t:'info', m:'Buscando questões em PCI Concursos...'},
-    {pct:38, t:'ok',   m:'47 questões encontradas — PCI Concursos.'},
-    {pct:48, t:'info', m:'Buscando questões no CESPE oficial...'},
-    {pct:60, t:'ok',   m:'83 questões encontradas — CESPE/Cebraspe.'},
-    {pct:70, t:'info', m:'Validando com IA (duplicatas e qualidade)...'},
-    {pct:80, t:'ok',   m:'12 questões descartadas (duplicatas).'},
-    {pct:90, t:'info', m:'Inserindo no banco de dados...'},
-    {pct:100,t:'ok',   m:'179 questões inseridas com sucesso.'},
-  ],
-  prova: [
-    {pct:8,  t:'info', m:'Conectando ao banco MySQL...'},
-    {pct:16, t:'ok',   m:'Conexão OK.'},
-    {pct:30, t:'info', m:'Localizando PDF da prova...'},
-    {pct:50, t:'ok',   m:'PDF encontrado. Extraindo questões...'},
-    {pct:68, t:'info', m:'Validando com IA...'},
-    {pct:82, t:'ok',   m:'3 questões descartadas.'},
-    {pct:93, t:'info', m:'Inserindo no banco...'},
-    {pct:100,t:'ok',   m:'54 questões inseridas com sucesso.'},
-  ],
-  auditoria: [
-    {pct:10, t:'info', m:'Lendo questões do banco...'},
-    {pct:25, t:'ok',   m:'8.214 questões carregadas.'},
-    {pct:40, t:'info', m:'Verificando gabaritos...'},
-    {pct:55, t:'ok',   m:'1 gabarito corrigido automaticamente.'},
-    {pct:68, t:'info', m:'Detectando duplicatas...'},
-    {pct:78, t:'ok',   m:'2 pares suspeitos sinalizados.'},
-    {pct:88, t:'info', m:'Verificando encoding...'},
-    {pct:95, t:'ok',   m:'4 questões com encoding corrigido.'},
-    {pct:100,t:'ok',   m:'Auditoria concluída. 3 questões para revisão humana.'},
-  ]
+// ── AUDITORIA REAL ──
+async function iniciarAuditoria() {
+  const btn = document.getElementById('btn-audit')
+  btn.disabled = true
+  document.getElementById('prog-fill').style.width = '0%'
+  document.getElementById('prog-pct').textContent = '0%'
+  document.getElementById('prog-label').textContent = 'Auditando...'
+  document.getElementById('log').innerHTML = ''
+  document.getElementById('status-dot').className = 'dot running'
+  document.getElementById('status-text').textContent = 'Auditando...'
+
+  addLog('info', 'Iniciando auditoria da base...')
+  document.getElementById('prog-fill').style.width = '20%'
+  document.getElementById('prog-pct').textContent = '20%'
+
+  try {
+    addLog('info', 'Verificando gabaritos...')
+    const gRes = await fetch(`${API}/auditoria/verificar-gabaritos?limite=500`)
+    const g = await gRes.json()
+    document.getElementById('prog-fill').style.width = '50%'
+    document.getElementById('prog-pct').textContent = '50%'
+    addLog('ok', `${g.verificadas} questões verificadas. ${g.problemas} problemas de gabarito.`)
+
+    addLog('info', 'Verificando duplicatas...')
+    const dRes = await fetch(`${API}/auditoria/verificar-duplicatas?limite=1000`)
+    const d = await dRes.json()
+    document.getElementById('prog-fill').style.width = '80%'
+    document.getElementById('prog-pct').textContent = '80%'
+    addLog('ok', `${d.pares_duplicados} pares duplicados encontrados.`)
+
+    addLog('info', 'Verificando encoding...')
+    const eRes = await fetch(`${API}/auditoria/verificar-encoding?limite=500`)
+    const e = await eRes.json()
+    document.getElementById('prog-fill').style.width = '100%'
+    document.getElementById('prog-pct').textContent = '100%'
+    document.getElementById('prog-label').textContent = 'Finalizado'
+    addLog('ok', `${e.com_problema} questões com encoding corrompido.`)
+
+    const total = g.problemas + d.pares_duplicados + e.com_problema
+    addLog('ok', `Auditoria concluída. ${total} itens para revisão.`)
+    document.getElementById('badge-revisar').textContent = total
+
+    const preview = document.getElementById('audit-preview')
+    const itens = []
+    g.lista.slice(0,2).forEach(p => itens.push(`<div class="audit-item"><span class="abadge abadge-err">Gabarito</span><div><div class="atext">Questão #${p.id}</div><div class="asub">${p.descricao}</div></div></div>`))
+    d.lista.slice(0,2).forEach(p => itens.push(`<div class="audit-item"><span class="abadge abadge-warn">Duplicata</span><div><div class="atext">Questão #${p.id_1} ≈ #${p.id_2}</div><div class="asub">Verificar manualmente</div></div></div>`))
+    e.lista.slice(0,1).forEach(p => itens.push(`<div class="audit-item"><span class="abadge abadge-warn">Encoding</span><div><div class="atext">Questão #${p.id}</div><div class="asub">${p.descricao}</div></div></div>`))
+    preview.innerHTML = itens.length ? itens.join('') : '<div class="empty-state">Nenhum problema encontrado!</div>'
+
+  } catch(e) {
+    addLog('err', 'Erro na auditoria: ' + e.message)
+  }
+
+  document.getElementById('status-dot').className = 'dot online'
+  document.getElementById('status-text').textContent = 'Concluído'
+  btn.disabled = false
 }
 
+// ── INICIAR AGENTE ──
 async function iniciar(mode) {
   if (running) return
   running = true
-  step = 0
-
-  ;['btn-tematica','btn-prova','btn-audit'].forEach(id => {
-    const b = document.getElementById(id)
-    if (b) b.disabled = true
-  })
-
-  const dot = document.getElementById('status-dot')
-  const txt = document.getElementById('status-text')
-  dot.className = 'dot running'
-  txt.textContent = 'Executando...'
-
+  ;['btn-tematica','btn-prova','btn-audit'].forEach(id => { const b=document.getElementById(id); if(b) b.disabled=true })
+  document.getElementById('status-dot').className = 'dot running'
+  document.getElementById('status-text').textContent = 'Executando...'
   document.getElementById('log').innerHTML = ''
   document.getElementById('prog-fill').style.width = '0%'
   document.getElementById('prog-pct').textContent = '0%'
   document.getElementById('prog-label').textContent = 'Iniciando...'
 
-  const steps = stepSets[mode] || stepSets.tematica
+  addLog('info', 'Conectando ao banco MySQL...')
+  await sleep(600)
+  document.getElementById('prog-fill').style.width = '10%'
+  document.getElementById('prog-pct').textContent = '10%'
+  addLog('ok', 'Conexão estabelecida.')
 
-  function tick() {
-    if (step >= steps.length) {
-      running = false
-      dot.className = 'dot online'
-      txt.textContent = 'Concluído'
-      document.getElementById('btn-tematica').disabled = false
-      document.getElementById('btn-audit').disabled = false
-      if (provas.length) document.getElementById('btn-prova').disabled = false
+  if (mode === 'tematica') {
+    // Coleta todos os filtros dinâmicos selecionados
+    const filtros = {}
+    Object.entries(filtrosSelecionados).forEach(([key, val]) => { filtros[key] = val })
+    const filtrosDesc = Object.values(filtros).map(f => f.nome).join(' | ') || 'Todos'
+    const banca = 'Todas'  // banca agora vem dos filtros dinâmicos
+    const limite = document.getElementById('limite').value
+    addLog('info', `Buscando: ${filtrosDesc} | limite ${limite}...`)
+    await sleep(800)
+    document.getElementById('prog-fill').style.width = '30%'
+    document.getElementById('prog-pct').textContent = '30%'
 
-      const agora = new Date()
-      document.getElementById('m-ultima').textContent = agora.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'})
-      document.getElementById('m-ultima-d').textContent = agora.toLocaleDateString('pt-BR')
-
-      if (mode === 'tematica') {
-        document.getElementById('m-hoje').textContent = 179
-        document.getElementById('m-hoje-d').textContent = '+179 nesta execução'
-        document.getElementById('m-hoje-d').classList.add('up')
-        document.getElementById('m-desc').textContent = 12
-        document.getElementById('m-total').textContent = (8214+179).toLocaleString('pt-BR')
-      }
-      if (mode === 'prova') {
-        document.getElementById('m-hoje').textContent = 54
-        document.getElementById('m-hoje-d').textContent = '+54 nesta execução'
-        document.getElementById('m-hoje-d').classList.add('up')
-        document.getElementById('m-desc').textContent = 3
-      }
-      return
+    try {
+      const res = await fetch(`${API}/agente/busca-tematica`, {
+        method:'POST', headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({
+          id_usuario: usuario.id,
+          filtros: filtrosSelecionados,
+          ano_ini: parseInt(document.getElementById('ano-ini').value),
+          limite: parseInt(limite)
+        })
+      })
+      const data = await res.json()
+      addLog('ok', `Busca iniciada — job ID: ${data.job_id}`)
+      document.getElementById('prog-fill').style.width = '50%'
+      document.getElementById('prog-pct').textContent = '50%'
+      await monitorarJob(data.job_id)
+    } catch(e) {
+      addLog('err', 'Erro ao iniciar busca: ' + e.message)
     }
-    const s = steps[step]
-    document.getElementById('prog-fill').style.width = s.pct + '%'
-    document.getElementById('prog-pct').textContent = s.pct + '%'
-    document.getElementById('prog-label').textContent = s.pct < 100 ? 'Processando...' : 'Finalizado'
-    addLog(s.t, s.m)
-    step++
-    setTimeout(tick, 500 + Math.random() * 600)
   }
-  tick()
+
+  running = false
+  document.getElementById('status-dot').className = 'dot online'
+  document.getElementById('status-text').textContent = 'Concluído'
+  ;['btn-tematica','btn-audit'].forEach(id => { const b=document.getElementById(id); if(b) b.disabled=false })
+  if (provas.length) document.getElementById('btn-prova').disabled = false
+  await carregarMetricas()
+  document.getElementById('m-ultima').textContent = new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'})
+  document.getElementById('m-ultima-d').textContent = new Date().toLocaleDateString('pt-BR')
 }
+
+async function monitorarJob(jobId) {
+  let tentativas = 0
+  while (tentativas < 60) {
+    await sleep(2000)
+    try {
+      const res = await fetch(`${API}/agente/job/${jobId}`)
+      const data = await res.json()
+      if (data.log) {
+        data.log.slice(-3).forEach(l => addLog(l.tipo === 'ok' ? 'ok' : l.tipo === 'err' ? 'err' : 'info', l.msg))
+      }
+      if (data.status === 'concluido') {
+        document.getElementById('prog-fill').style.width = '100%'
+        document.getElementById('prog-pct').textContent = '100%'
+        document.getElementById('prog-label').textContent = 'Finalizado'
+        if (data.resultado) {
+          addLog('ok', `${data.resultado.inseridas} inseridas, ${data.resultado.descartadas} descartadas.`)
+          document.getElementById('m-hoje').textContent = data.resultado.inseridas
+        }
+        break
+      }
+      if (data.status === 'erro') { addLog('err', data.erro || 'Erro desconhecido'); break }
+    } catch(e) { break }
+    tentativas++
+    const pct = Math.min(50 + tentativas * 2, 95)
+    document.getElementById('prog-fill').style.width = pct + '%'
+    document.getElementById('prog-pct').textContent = pct + '%'
+  }
+}
+
+function sleep(ms) { return new Promise(r => setTimeout(r, ms)) }
 </script>
 </body>
 </html>

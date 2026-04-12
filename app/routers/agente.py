@@ -103,8 +103,9 @@ def listar_assuntos():
     cursor = conn.cursor(dictionary=True)
     try:
         cursor.execute("""
-            SELECT id, nome, id_assunto as id_pai
-            FROM assunto ORDER BY nome
+            SELECT id, nome, id_assunto AS id_pai, posicao_gerar_nome
+            FROM assunto
+            ORDER BY posicao_gerar_nome ASC, nome ASC
         """)
         return {"assuntos": cursor.fetchall()}
     finally:
