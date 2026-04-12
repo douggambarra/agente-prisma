@@ -37,54 +37,48 @@ def get_claude():
 
 # ── BUSCA NA WEB ──────────────────────────────────────────────────────────────
 
+# Chaves da Google Custom Search API
+GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY", "AIzaSyB8uFoYEQBuPLI8VjfKrB4W1WPBSIlb8C4")
+GOOGLE_CX      = os.getenv("GOOGLE_CX",      "b7075a2befd54425d")
+
 def buscar_urls(query: str, num: int = 8) -> list:
-    urls = _buscar_google(query, num)
-    if not urls:
-        urls = _buscar_bing(query, num)
-    return urls
-
-def _buscar_google(query: str, num: int) -> list:
+    """Busca via Google Custom Search API oficial — funciona de qualquer servidor."""
     urls = []
     try:
-        q = requests.utils.quote(query)
-        resp = requests.get(
-            f"https://www.google.com/search?q={q}&num={num}&hl=pt-BR",
-            headers=HEADERS, timeout=15
-        )
-        soup = BeautifulSoup(resp.text, "html.parser")
-        for a in soup.select("a[href]"):
-            m = re.search(r"/url\?q=(https?://[^&]+)", a.get("href", ""))
-            if m:
-                url = requests.utils.unquote(m.group(1))
-                if _url_valida(url) and url not in urls:
-                    urls.append(url)
+        # A API retorna até 10 por chamada; fazemos até 2 páginas se necessário
+        for start in [1, 11]:
             if len(urls) >= num:
                 break
-    except Exception as e:
-        print(f"Google error: {e}")
-    return urls
-
-def _buscar_bing(query: str, num: int) -> list:
-    urls = []
-    try:
-        q = requests.utils.quote(query)
-        resp = requests.get(
-            f"https://www.bing.com/search?q={q}&count={num}&setlang=pt-BR",
-            headers=HEADERS, timeout=15
-        )
-        soup = BeautifulSoup(resp.text, "html.parser")
-        for a in soup.select("li.b_algo a[href]"):
-            href = a.get("href", "")
-            if href.startswith("http") and _url_valida(href) and href not in urls:
-                urls.append(href)
-            if len(urls) >= num:
+            params = {
+                "key": GOOGLE_API_KEY,
+                "cx":  GOOGLE_CX,
+                "q":   query,
+                "num": min(10, num - len(urls)),
+                "start": start,
+                "lr": "lang_pt",
+                "gl": "br",
+            }
+            resp = requests.get(
+                "https://www.googleapis.com/customsearch/v1",
+                params=params, timeout=15
+            )
+            if not resp.ok:
+                print(f"Google CSE erro {resp.status_code}: {resp.text[:200]}")
                 break
+            data = resp.json()
+            items = data.get("items", [])
+            if not items:
+                break
+            for item in items:
+                link = item.get("link", "")
+                if link and _url_valida(link) and link not in urls:
+                    urls.append(link)
     except Exception as e:
-        print(f"Bing error: {e}")
+        print(f"Google CSE error: {e}")
     return urls
 
 def _url_valida(url: str) -> bool:
-    bloqueados = ["google.", "bing.", "youtube.", "facebook.", "instagram.",
+    bloqueados = ["google.", "youtube.", "facebook.", "instagram.",
                   "twitter.", "x.com", "tiktok.", "linkedin.", "wikipedia."]
     return not any(b in url for b in bloqueados)
 
