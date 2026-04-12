@@ -81,7 +81,7 @@ def _url_valida(url: str) -> bool:
 
 def buscar_pagina(url: str) -> str:
     try:
-        resp = requests.get(url, headers=HEADERS, timeout=15)
+        resp = requests.get(url, headers=HEADERS, timeout=8)
         resp.raise_for_status()
         soup = BeautifulSoup(resp.text, "html.parser")
         for tag in soup(["script", "style", "nav", "footer", "header",
@@ -179,7 +179,7 @@ def extrair_questoes_com_claude(texto: str) -> list:
             model="claude-haiku-4-5-20251001",
             max_tokens=4000,
             messages=[{"role": "user",
-                       "content": PROMPT_EXTRACAO.format(texto=texto[:12000])}]
+                       "content": PROMPT_EXTRACAO.format(texto=texto[:6000])}]
         )
         txt = msg.content[0].text.strip().replace("```json", "").replace("```", "").strip()
         m = re.search(r'\{.*\}', txt, re.DOTALL)
@@ -365,7 +365,7 @@ def processar_busca(
 
         info(f'Buscando: "{query[:70]}"')
         try:
-            urls = buscar_urls(query, num=8)
+            urls = buscar_urls(query, num=5)
         except Exception as e:
             err(f"Erro na busca: {str(e)[:100]}")
             urls = []
