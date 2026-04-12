@@ -232,7 +232,7 @@ def inserir_pergunta(conn, id_usuario: int, questao: dict) -> int:
             VALUES (%s, %s)
         """, (nome, id_usuario))
 
-        id_pergunta = conn.insert_id()
+        id_pergunta = cursor.lastrowid
 
         # Passo 2: UPDATE com todos os campos reais
         cursor.execute("""
