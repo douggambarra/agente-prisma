@@ -329,6 +329,148 @@ def vincular_assuntos(conn, id_usuario: int, id_pergunta: int, ids_assunto: list
 
 # ── PROCESSO PRINCIPAL ────────────────────────────────────────────────────────
 
+
+PROMPT_ANINHAR = """Você é um classificador de questões de concurso público brasileiro.
+
+Dada uma questão e a lista de assuntos disponíveis no sistema, identifique quais assuntos 
+da lista se aplicam a esta questão. Considere: matéria/disciplina, banca, ano, região, órgão, 
+escolaridade, cargo/área.
+
+Assuntos disponíveis (formato: id | raiz | nome):
+{assuntos}
+
+Questão:
+{questao}
+
+Retorne APENAS JSON válido sem markdown:
+{{
+  "ids_assunto": [1, 2, 3],
+  "justificativa": "breve explicação"
+}}
+
+Selecione apenas os IDs que realmente se aplicam. Se nenhum se aplicar, retorne lista vazia."""
+
+def identificar_assuntos(questao: dict, todos_assuntos: list) -> list:
+    """
+    Usa Claude para identificar quais assuntos do BD se encaixam na questão.
+    Retorna lista de IDs das folhas compatíveis.
+    """
+    if not todos_assuntos:
+        return []
+
+    # Monta mapa de filhos para identificar folhas
+    tem_filhos = set()
+    for a in todos_assuntos:
+        if a.get('id_pai'):
+            tem_filhos.add(a['id_pai'])
+
+    # Só folhas são vinculáveis
+    folhas = [a for a in todos_assuntos if a['id'] not in tem_filhos]
+    if not folhas:
+        return []
+
+    # Monta mapa id_raiz -> nome_raiz para contexto
+    raiz_por_id = {}
+    for a in todos_assuntos:
+        if not a.get('id_pai'):
+            raiz_por_id[a['id']] = a['nome']
+
+    def get_raiz(assunto):
+        pai = assunto.get('id_pai')
+        if not pai:
+            return assunto['nome']
+        # sobe na hierarquia
+        visitados = set()
+        atual = assunto
+        while atual.get('id_pai') and atual['id_pai'] not in visitados:
+            visitados.add(atual['id'])
+            pai_node = next((x for x in todos_assuntos if x['id'] == atual['id_pai']), None)
+            if not pai_node:
+                break
+            atual = pai_node
+        return atual['nome']
+
+    # Lista resumida de folhas para o prompt (max 200 para não estourar contexto)
+    folhas_resumo = folhas[:200]
+    lista = "\n".join([
+        f"{a['id']} | {get_raiz(a)} | {a['nome']}"
+        for a in folhas_resumo
+    ])
+
+    texto_questao = f"{questao.get('enunciado','')} {questao.get('pergunta','')}".strip()[:1000]
+
+    try:
+        client = get_claude()
+        msg = client.messages.create(
+            model="claude-haiku-4-5-20251001",
+            max_tokens=300,
+            messages=[{"role": "user", "content": PROMPT_ANINHAR.format(
+                assuntos=lista,
+                questao=texto_questao
+            )}]
+        )
+        txt = msg.content[0].text.strip().replace("```json","").replace("```","").strip()
+        import re
+        m = re.search(r'\{.*\}', txt, re.DOTALL)
+        if m:
+            dados = json.loads(m.group())
+            ids = [int(x) for x in dados.get("ids_assunto", []) if x]
+            # Valida que os IDs existem e são folhas
+            ids_validos = [i for i in ids if any(f['id'] == i for f in folhas)]
+            return ids_validos
+    except Exception as e:
+        print(f"Erro identificar_assuntos: {e}")
+    return []
+
+def identificar_prova(questao: dict, conn) -> int | None:
+    """
+    Tenta encontrar uma prova no BD que corresponda à questão.
+    Busca por banca + ano extraídos da questão.
+    """
+    banca = questao.get("banca", "")
+    ano   = questao.get("ano", "")
+    if not banca and not ano:
+        return None
+    try:
+        cursor = conn.cursor(dictionary=True)
+        if banca and ano:
+            cursor.execute("""
+                SELECT id FROM prova 
+                WHERE nome LIKE %s AND YEAR(data_da_prova) = %s
+                LIMIT 1
+            """, (f"%{banca}%", str(ano)))
+        elif banca:
+            cursor.execute("SELECT id FROM prova WHERE nome LIKE %s LIMIT 1", (f"%{banca}%",))
+        elif ano:
+            cursor.execute("SELECT id FROM prova WHERE YEAR(data_da_prova) = %s LIMIT 1", (str(ano),))
+        row = cursor.fetchone()
+        cursor.close()
+        return row['id'] if row else None
+    except Exception as e:
+        print(f"Erro identificar_prova: {e}")
+        return None
+
+def vincular_prova(conn, id_usuario: int, id_pergunta: int, id_prova: int):
+    """Vincula pergunta à prova — igual ao gerenciador."""
+    cursor = conn.cursor()
+    try:
+        cursor.execute("""
+            SELECT id FROM vinculo_prova_pergunta
+            WHERE id_pergunta = %s AND id_prova = %s LIMIT 1
+        """, (id_pergunta, id_prova))
+        if cursor.fetchone():
+            return
+        cursor.execute("""
+            INSERT INTO vinculo_prova_pergunta (id_prova, id_pergunta, id_usuario)
+            VALUES (%s, %s, %s)
+        """, (id_prova, id_pergunta, id_usuario))
+        conn.commit()
+    except Exception as e:
+        conn.rollback()
+        print(f"Erro vincular_prova: {e}")
+    finally:
+        cursor.close()
+
 def processar_busca(
     id_usuario: int,
     comando: str,            # texto livre do usuário
@@ -357,6 +499,17 @@ def processar_busca(
     info("Conectando ao banco...")
     conn = get_conn()
     ok("Conexão estabelecida.")
+
+    # Carrega todos os assuntos do BD para o aninhamento automático
+    todos_assuntos = []
+    try:
+        cur = conn.cursor(dictionary=True)
+        cur.execute("SELECT id, nome, id_assunto AS id_pai, posicao_gerar_nome FROM assunto ORDER BY posicao_gerar_nome ASC, nome ASC")
+        todos_assuntos = cur.fetchall()
+        cur.close()
+        info(f"{len(todos_assuntos)} assuntos carregados para classificação.")
+    except Exception as e:
+        warn(f"Não foi possível carregar assuntos: {e}")
 
     # 1. Claude interpreta o comando e gera queries
     info(f'Interpretando: "{comando}"')
@@ -443,7 +596,21 @@ def processar_busca(
 
                 id_pergunta = inserir_pergunta(conn_ins, id_usuario, q)
                 inserir_respostas(conn_ins, id_pergunta, q.get("alternativas", []))
-                vincular_assuntos(conn_ins, id_usuario, id_pergunta, ids_assunto)
+
+                # Identifica e vincula assuntos automaticamente via Claude
+                ids_auto = identificar_assuntos(q, todos_assuntos)
+                # Combina com os IDs manuais passados pelo usuário (se houver)
+                ids_final = list(set(ids_assunto + ids_auto))
+                if ids_final:
+                    vincular_assuntos(conn_ins, id_usuario, id_pergunta, ids_final)
+                    info(f"Vinculados {len(ids_final)} assunto(s).")
+
+                # Tenta vincular a uma prova existente
+                id_prova = identificar_prova(q, conn_ins)
+                if id_prova:
+                    vincular_prova(conn_ins, id_usuario, id_pergunta, id_prova)
+                    info(f"Vinculada à prova #{id_prova}.")
+
                 inseridas += 1
                 ok(f"Inserida #{id_pergunta}: {pergunta_txt[:60]}...")
             finally:
