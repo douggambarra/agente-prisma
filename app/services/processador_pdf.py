@@ -260,7 +260,7 @@ def _inserir_prova(conn, id_usuario: int, dados: dict) -> int:
         """, (nome, url, banca, data_prova, id_orgao, id_usuario))
 
         conn.commit()
-        id_inserido = conn.insert_id()
+        id_inserido = cursor.lastrowid
         print(f"Prova inserida id={id_inserido}")
         return id_inserido
     except Exception as e:
@@ -285,7 +285,7 @@ def _inserir_pergunta_passo1(conn, id_usuario: int) -> int:
             VALUES (%s, %s)
         """, (nome, id_usuario))
         conn.commit()
-        return conn.insert_id()
+        return cursor.lastrowid
     finally:
         cursor.close()
 
