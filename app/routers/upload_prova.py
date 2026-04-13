@@ -8,13 +8,12 @@ from app.services.processador_pdf import processar_pdfs, salvar_prova_completa
 router = APIRouter()
 jobs = {}
 
-# ── MODELS ────────────────────────────────────────────────────────────────────
-
 class DadosProva(BaseModel):
     nome: str
     banca: str
     data_da_prova: Optional[str] = None
     id_orgao: Optional[int] = None
+    id_prova_existente: Optional[int] = None
 
 class AlternativaPreview(BaseModel):
     letra: str
@@ -35,8 +34,6 @@ class ConfirmarSalvamentoRequest(BaseModel):
     dados_prova: DadosProva
     questoes: List[QuestaoPreview]
 
-# ── BACKGROUND ────────────────────────────────────────────────────────────────
-
 def executar_processamento(job_id: str, conteudo_prova: bytes, conteudo_gabarito: Optional[bytes]):
     try:
         jobs[job_id]["status"] = "processando"
@@ -47,7 +44,35 @@ def executar_processamento(job_id: str, conteudo_prova: bytes, conteudo_gabarito
         jobs[job_id]["status"] = "erro"
         jobs[job_id]["erro"] = str(e)
 
-# ── ENDPOINTS ─────────────────────────────────────────────────────────────────
+@router.get("/provas")
+def listar_provas(busca: str = ""):
+    """Lista provas cadastradas no gerenciador para seleção."""
+    conn = get_connection()
+    cursor = conn.cursor(dictionary=True)
+    try:
+        if busca:
+            cursor.execute("""
+                SELECT id, nome, banca, data_da_prova
+                FROM prova
+                WHERE nome LIKE %s OR banca LIKE %s
+                ORDER BY data_cadastro DESC
+                LIMIT 100
+            """, (f"%{busca}%", f"%{busca}%"))
+        else:
+            cursor.execute("""
+                SELECT id, nome, banca, data_da_prova
+                FROM prova
+                ORDER BY data_cadastro DESC
+                LIMIT 100
+            """)
+        provas = cursor.fetchall()
+        for p in provas:
+            if p.get("data_da_prova"):
+                p["data_da_prova"] = str(p["data_da_prova"])
+        return {"provas": provas}
+    finally:
+        cursor.close()
+        conn.close()
 
 @router.post("/processar")
 async def processar_upload(
@@ -55,48 +80,32 @@ async def processar_upload(
     prova: UploadFile = File(...),
     gabarito: Optional[UploadFile] = File(None)
 ):
-    """
-    Recebe 1 ou 2 PDFs e processa com IA.
-    Retorna job_id para polling.
-    """
     if not prova.filename.lower().endswith(".pdf"):
         raise HTTPException(status_code=400, detail="Arquivo de prova deve ser PDF.")
-
     conteudo_prova = await prova.read()
     conteudo_gabarito = None
-
     if gabarito and gabarito.filename:
         if not gabarito.filename.lower().endswith(".pdf"):
             raise HTTPException(status_code=400, detail="Gabarito deve ser PDF.")
         conteudo_gabarito = await gabarito.read()
-
     job_id = str(uuid.uuid4())[:8]
     jobs[job_id] = {"status": "aguardando", "resultado": None, "erro": None}
-
     background_tasks.add_task(executar_processamento, job_id, conteudo_prova, conteudo_gabarito)
     return {"job_id": job_id, "status": "iniciado"}
 
-
 @router.get("/job/{job_id}")
 def status_job(job_id: str):
-    """Polling do status do processamento."""
     if job_id not in jobs:
         raise HTTPException(status_code=404, detail="Job não encontrado.")
     return jobs[job_id]
 
-
 @router.post("/confirmar")
 def confirmar_salvamento(data: ConfirmarSalvamentoRequest):
-    """
-    Recebe os dados revisados do preview e salva no banco.
-    """
     if data.job_id not in jobs:
         raise HTTPException(status_code=404, detail="Job não encontrado.")
-
     job = jobs[data.job_id]
     if job["status"] != "aguardando_confirmacao":
         raise HTTPException(status_code=400, detail=f"Job em status inválido: {job['status']}")
-
     try:
         resultado = salvar_prova_completa(
             id_usuario=data.id_usuario,

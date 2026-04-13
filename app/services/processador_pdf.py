@@ -224,40 +224,54 @@ def _recuperar_json_truncado(txt: str) -> dict:
 
 def salvar_prova_completa(id_usuario: int, dados_prova: dict, questoes: list) -> dict:
     """
-    Salva a prova e todas as questões no banco.
-    Segue exatamente a mesma lógica do gerenciador PHP.
+    Salva questões no banco vinculando à prova selecionada.
+    Se id_prova_existente for fornecido, usa a prova já cadastrada no gerenciador
+    e copia os assuntos dela para cada questão.
     """
     conn = get_connection()
     inseridas = 0
     erros = 0
 
     try:
-        # 1. Inserir a prova
-        id_prova = _inserir_prova(conn, id_usuario, dados_prova)
+        id_prova_existente = dados_prova.get("id_prova_existente")
 
-        # 2. Inserir cada questão
+        if id_prova_existente:
+            # Usa prova já cadastrada no gerenciador
+            id_prova = int(id_prova_existente)
+            print(f"Usando prova existente id={id_prova}")
+
+            # Busca assuntos vinculados à prova para replicar nas questões
+            ids_assunto = _buscar_assuntos_prova(conn, id_prova)
+            print(f"Assuntos da prova: {ids_assunto}")
+
+            # Gera nome da questão a partir dos assuntos da prova
+            nome_base = _gerar_nome_por_assuntos(conn, ids_assunto)
+            print(f"Nome base das questões: {nome_base!r}")
+        else:
+            # Cria nova prova (fluxo antigo)
+            id_prova = _inserir_prova(conn, id_usuario, dados_prova)
+            ids_assunto = []
+            nome_base = None
+
+        # Insere cada questão
         for i, q in enumerate(questoes):
             try:
-                # PASSO 1: INSERT mínimo (igual ao cadastrar_pergunta_com_assunto.php)
                 id_pergunta = _inserir_pergunta_passo1(conn, id_usuario)
-
-                # PASSO 2: UPDATE com dados reais (igual ao alterar_pergunta.php)
-                _inserir_pergunta_passo2(conn, id_pergunta, q)
-
-                # PASSO 3: INSERT respostas (igual ao cadastrar_pergunta_com_assunto.php)
+                _inserir_pergunta_passo2(conn, id_pergunta, q, nome_base)
                 _inserir_respostas(conn, id_pergunta, q.get("alternativas", []))
-
-                # PASSO 4: Marcar resposta correta (igual ao alterar_pergunta.php)
                 _marcar_correta(conn, id_pergunta, q.get("alternativas", []))
-
-                # PASSO 5: Vincular à prova com posição (igual ao cadastrar_multipla_pergunta_prova.php)
                 _vincular_prova_pergunta(conn, id_prova, id_pergunta, id_usuario, i + 1)
+
+                # Replica assuntos da prova para a questão
+                if ids_assunto:
+                    _vincular_assuntos_pergunta(conn, id_pergunta, id_usuario, ids_assunto)
 
                 inseridas += 1
 
             except Exception as e:
                 erros += 1
-                print(f"Erro ao inserir questão {q.get('numero', i+1)}: {e}")
+                import traceback
+                print(f"Erro questão {q.get('numero', i+1)}: {traceback.format_exc()}")
                 conn.rollback()
 
         conn.commit()
@@ -275,6 +289,104 @@ def salvar_prova_completa(id_usuario: int, dados_prova: dict, questoes: list) ->
         raise e
     finally:
         conn.close()
+
+
+def _buscar_assuntos_prova(conn, id_prova: int) -> list:
+    """Busca os ids de assuntos vinculados a uma prova."""
+    cursor = conn.cursor()
+    try:
+        cursor.execute("""
+            SELECT id_assunto FROM vinculo_assunto_prova
+            WHERE id_prova = %s
+        """, (id_prova,))
+        return [row[0] for row in cursor.fetchall()]
+    finally:
+        cursor.close()
+
+
+def _gerar_nome_por_assuntos(conn, ids_assunto: list) -> str:
+    """
+    Gera o nome da questão a partir dos assuntos vinculados.
+    Igual ao alterar_pergunta.php: pega folhas na ordem de posicao_gerar_nome das raízes.
+    Raízes com posicao_gerar_nome = 0 não entram no nome.
+    Raízes conhecidas que entram no nome: Matéria e Assunto(1), Banca(2), Órgão(3), Ano(4)
+    """
+    if not ids_assunto:
+        return ""
+    cursor = conn.cursor(dictionary=True)
+    try:
+        # Busca as raízes ordenadas por posicao_gerar_nome (só as que != 0)
+        cursor.execute("""
+            SELECT id FROM assunto
+            WHERE id_assunto IS NULL AND posicao_gerar_nome != 0
+            ORDER BY posicao_gerar_nome ASC
+        """)
+        raizes = [row["id"] for row in cursor.fetchall()]
+
+        # Busca nomes das folhas selecionadas
+        fmt = ','.join(['%s'] * len(ids_assunto))
+        cursor.execute(f"""
+            SELECT a.id, a.nome, a.id_assunto
+            FROM assunto a
+            WHERE a.id IN ({fmt})
+        """, ids_assunto)
+        folhas = {row["id"]: row for row in cursor.fetchall()}
+
+        # Para cada folha, descobre qual raiz pertence
+        def achar_raiz(id_assunto):
+            cursor2 = conn.cursor(dictionary=True)
+            try:
+                visited = set()
+                atual = id_assunto
+                while atual:
+                    if atual in visited:
+                        break
+                    visited.add(atual)
+                    cursor2.execute("SELECT id, id_assunto FROM assunto WHERE id = %s", (atual,))
+                    row = cursor2.fetchone()
+                    if not row or row["id_assunto"] is None:
+                        return atual
+                    atual = row["id_assunto"]
+                return atual
+            finally:
+                cursor2.close()
+
+        # Mapa raiz_id → nome da folha
+        raiz_para_folha = {}
+        for id_folha, folha in folhas.items():
+            raiz_id = achar_raiz(id_folha)
+            raiz_para_folha[raiz_id] = folha["nome"]
+
+        # Monta nome na ordem das raízes
+        partes = []
+        for raiz_id in raizes:
+            if raiz_id in raiz_para_folha:
+                partes.append(raiz_para_folha[raiz_id])
+
+        return " | ".join(partes)
+    finally:
+        cursor.close()
+
+
+def _vincular_assuntos_pergunta(conn, id_pergunta: int, id_usuario: int, ids_assunto: list):
+    """
+    Vincula assuntos à pergunta — igual ao alterar_pergunta.php:
+    DELETE os existentes, depois INSERT um por um.
+    """
+    cursor = conn.cursor()
+    try:
+        cursor.execute("DELETE FROM vinculo_assunto_pergunta WHERE id_pergunta = %s", (id_pergunta,))
+        for id_assunto in ids_assunto:
+            cursor.execute("""
+                INSERT INTO vinculo_assunto_pergunta (id_assunto, id_pergunta, id_usuario)
+                VALUES (%s, %s, %s)
+            """, (id_assunto, id_pergunta, id_usuario))
+        conn.commit()
+    except Exception as e:
+        conn.rollback()
+        print(f"Erro vincular assuntos: {e}")
+    finally:
+        cursor.close()
 
 
 def _inserir_prova(conn, id_usuario: int, dados: dict) -> int:
@@ -327,21 +439,25 @@ def _inserir_pergunta_passo1(conn, id_usuario: int) -> int:
         cursor.close()
 
 
-def _inserir_pergunta_passo2(conn, id_pergunta: int, questao: dict):
+def _inserir_pergunta_passo2(conn, id_pergunta: int, questao: dict, nome_base: str = None):
     """
-    PASSO 2 — UPDATE com dados reais, igual ao alterar_pergunta.php:
-        UPDATE pergunta SET url, finalizada, destaque, pergunta, enunciado, gabarito
-    O campo 'nome' é gerado a partir dos assuntos no gerenciador.
-    Aqui usamos a disciplina como nome (será atualizado quando assuntos forem vinculados).
+    PASSO 2 — UPDATE com dados reais, igual ao alterar_pergunta.php.
+    nome_base: nome gerado a partir dos assuntos da prova (se disponível).
     """
     cursor = conn.cursor()
     try:
         pergunta_txt = encode_latin1(questao.get("pergunta", ""))
         enunciado    = encode_latin1(questao.get("enunciado", "") or "")
         gabarito     = encode_latin1(questao.get("gabarito", "") or "")
-        disciplina   = encode_latin1(questao.get("disciplina", "") or "")
-        nome         = encode_latin1(disciplina[:255]) if disciplina else encode_latin1(pergunta_txt[:255])
-        url          = gerar_url(pergunta_txt)
+
+        # Nome: usa nome_base dos assuntos se disponível, senão usa disciplina
+        if nome_base:
+            nome = encode_latin1(nome_base[:255])
+        else:
+            disciplina = encode_latin1(questao.get("disciplina", "") or "")
+            nome = encode_latin1(disciplina[:255]) if disciplina else encode_latin1(pergunta_txt[:255])
+
+        url = gerar_url(pergunta_txt)
 
         cursor.execute("""
             UPDATE pergunta SET
