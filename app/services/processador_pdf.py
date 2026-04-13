@@ -87,6 +87,7 @@ Retorne APENAS JSON válido, sem markdown, neste formato exato:
       "enunciado": "texto do enunciado/contexto (se houver texto base antes da questão, senão string vazia)",
       "pergunta": "texto completo do comando da questão",
       "gabarito": "A",
+      "anulada": false,
       "disciplina": "nome da disciplina (ex: Língua Portuguesa, Informática, Direito Penal)",
       "alternativas": [
         {"letra": "A", "texto": "texto da alternativa A", "correta": true},
@@ -104,6 +105,7 @@ Regras:
 - Marque "correta: true" apenas na alternativa do gabarito
 - Se gabarito não identificado: todas as alternativas com "correta: false" e "gabarito": ""
 - Questões Certo/Errado: apenas 2 alternativas [{"letra":"C","texto":"Certo",...},{"letra":"E","texto":"Errado",...}]
+- QUESTÕES ANULADAS: se no gabarito a questão aparecer marcada como "ANULADA", "Anulada", "*" (asterisco no número), "A" com indicação especial, ou qualquer outra marcação que indique anulação, defina "gabarito": "ANULADA" e "anulada": true
 - PRESERVE todos os caracteres especiais exatamente como aparecem no PDF: símbolos matemáticos (∑, √, π, ≤, ≥, ≠, ×, ÷), lógicos (∧, ∨, ¬, →, ↔, ∀, ∃), letras gregas (α, β, γ, θ), acentos e cedilha do português (ã, ç, é, etc.), e qualquer outro símbolo especial
 - NUNCA substitua símbolos especiais por texto (ex: não escreva "nao-p" no lugar de "¬p", nem "V" no lugar de "∨")
 - Retorne JSON puro sem nenhum texto antes ou depois"""
@@ -268,7 +270,8 @@ def salvar_prova_completa(id_usuario: int, dados_prova: dict, questoes: list) ->
                 _inserir_pergunta_passo2(conn, id_pergunta, q, nome_base)
                 _inserir_respostas(conn, id_pergunta, q.get("alternativas", []))
                 _marcar_correta(conn, id_pergunta, q.get("alternativas", []))
-                _vincular_prova_pergunta(conn, id_prova, id_pergunta, id_usuario, i + 1)
+                anulada = q.get("anulada", False)
+                _vincular_prova_pergunta(conn, id_prova, id_pergunta, id_usuario, i + 1, anulada)
 
                 # Replica assuntos da prova para a questão
                 if ids_assunto:
@@ -450,15 +453,24 @@ def _inserir_pergunta_passo1(conn, id_usuario: int) -> int:
 def _inserir_pergunta_passo2(conn, id_pergunta: int, questao: dict, nome_base: str = None):
     """
     PASSO 2 — UPDATE com dados reais, igual ao alterar_pergunta.php.
-    nome_base: nome gerado a partir dos assuntos da prova (se disponível).
+    Questões anuladas: gabarito = "ANULADA", finalizada = 0
     """
     cursor = conn.cursor()
     try:
         pergunta_txt = encode_latin1(questao.get("pergunta", ""))
         enunciado    = encode_latin1(questao.get("enunciado", "") or "")
-        gabarito     = encode_latin1(questao.get("gabarito", "") or "")
+        anulada      = questao.get("anulada", False)
 
-        # Nome: usa nome_base dos assuntos se disponível, senão usa disciplina
+        # Gabarito: ANULADA se anulada, senão letra normal
+        if anulada:
+            gabarito = "ANULADA"
+        else:
+            gabarito = encode_latin1(questao.get("gabarito", "") or "")
+
+        # finalizada: 0 se anulada, 1 se normal
+        finalizada = 0 if anulada else 1
+
+        # Nome da questão
         if nome_base:
             nome = encode_latin1(nome_base[:255])
         else:
@@ -470,14 +482,14 @@ def _inserir_pergunta_passo2(conn, id_pergunta: int, questao: dict, nome_base: s
         cursor.execute("""
             UPDATE pergunta SET
                 url        = %s,
-                finalizada = 1,
+                finalizada = %s,
                 destaque   = 0,
                 pergunta   = %s,
                 enunciado  = %s,
                 gabarito   = %s,
                 nome       = %s
             WHERE id = %s
-        """, (url, pergunta_txt, enunciado, gabarito, nome, id_pergunta))
+        """, (url, finalizada, pergunta_txt, enunciado, gabarito, nome, id_pergunta))
 
         conn.commit()
     finally:
@@ -557,20 +569,20 @@ def _marcar_correta(conn, id_pergunta: int, alternativas: list):
         cursor.close()
 
 
-def _vincular_prova_pergunta(conn, id_prova: int, id_pergunta: int, id_usuario: int, posicao: int):
+def _vincular_prova_pergunta(conn, id_prova: int, id_pergunta: int, id_usuario: int, posicao: int, anulada: bool = False):
     """
-    Vincula pergunta à prova com posição.
-    Igual ao cadastrar_multipla_pergunta_prova.php e cadastrar_pergunta_com_assunto.php:
-        INSERT INTO vinculo_prova_pergunta (id_prova, id_pergunta, id_usuario, posicao, id_topico)
+    Vincula pergunta à prova.
+    status: 0 = Válida, 1 = Anulada, 2 = Desatualizada
     """
     cursor = conn.cursor()
     try:
+        status = 1 if anulada else 0
         cursor.execute("""
             INSERT INTO vinculo_prova_pergunta
-                (id_prova, id_pergunta, id_usuario, posicao, id_topico)
+                (id_prova, id_pergunta, id_usuario, posicao, id_topico, status)
             VALUES
-                (%s, %s, %s, %s, 0)
-        """, (id_prova, id_pergunta, id_usuario, posicao))
+                (%s, %s, %s, %s, 0, %s)
+        """, (id_prova, id_pergunta, id_usuario, posicao, status))
         conn.commit()
     except Exception as e:
         conn.rollback()

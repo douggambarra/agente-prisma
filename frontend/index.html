@@ -58,7 +58,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'DM San
 .metric-value{font-family:'Syne',sans-serif;font-size:24px;font-weight:700;color:var(--text);letter-spacing:-0.02em}
 .metric-delta{font-size:11px;color:var(--text3);margin-top:4px}
 .metric-delta.up{color:var(--teal)}
-.grid{display:grid;grid-template-columns:1fr 340px;gap:16px;align-items:start}
+.grid{display:flex;flex-direction:column;gap:16px}
 .card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius-lg);padding:20px}
 .card-title{font-family:'Syne',sans-serif;font-size:13px;font-weight:600;color:var(--text);letter-spacing:0.01em;margin-bottom:16px}
 .tabs{display:flex;gap:2px;margin-bottom:18px;background:var(--bg3);border-radius:var(--radius);padding:3px}
@@ -654,14 +654,11 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'DM San
             </div>
           </div>
         </div>
-        <div style="display:flex;flex-direction:column;gap:16px">
-          <div class="card">
-            <div class="card-title">Progresso</div>
-            <div class="progress-label"><span id="prog-label">Aguardando início</span><span id="prog-pct">0%</span></div>
-            <div class="progress-bar"><div class="progress-fill" id="prog-fill" style="width:0%"></div></div>
-            <div class="log" id="log"><div class="log-line"><span class="log-time">--:--:--</span><span>Agente pronto.</span></div></div>
-          </div>
-
+        <div class="card">
+          <div class="card-title">Progresso</div>
+          <div class="progress-label"><span id="prog-label">Aguardando início</span><span id="prog-pct">0%</span></div>
+          <div class="progress-bar"><div class="progress-fill" id="prog-fill" style="width:0%"></div></div>
+          <div class="log" id="log"><div class="log-line"><span class="log-time">--:--:--</span><span>Agente pronto.</span></div></div>
         </div>
       </div>
     </div>
@@ -1749,13 +1746,13 @@ function pdfMostrarPreview(dados) {
   const lista = document.getElementById('pv-q-lista')
   const MAX = 5
   lista.innerHTML = questoes.slice(0, MAX).map(q => `
-    <div class="q-item">
-      <div class="q-num">${q.numero}</div>
+    <div class="q-item" style="${q.anulada ? 'border-color:var(--red);background:var(--red-bg)' : ''}">
+      <div class="q-num" style="${q.anulada ? 'background:var(--red-bg);color:var(--red)' : ''}">${q.numero}</div>
       <div class="q-body">
         <div class="q-text">${escHtml((q.pergunta||'').substring(0,120))}…</div>
         <div class="q-footer">
           ${q.disciplina ? `<span class="q-disc">${escHtml(q.disciplina)}</span>` : ''}
-          ${q.gabarito ? `<span class="q-gab">✓ ${escHtml(q.gabarito)}</span>` : ''}
+          ${q.anulada ? `<span style="background:var(--red-bg);color:var(--red);border-radius:5px;padding:1px 7px;font-size:10px;font-weight:700">✕ ANULADA</span>` : (q.gabarito ? `<span class="q-gab">✓ ${escHtml(q.gabarito)}</span>` : '')}
         </div>
       </div>
     </div>`).join('')

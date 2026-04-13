@@ -25,6 +25,7 @@ class QuestaoPreview(BaseModel):
     enunciado: str
     pergunta: str
     gabarito: str
+    anulada: bool = False
     disciplina: str
     alternativas: List[AlternativaPreview]
 
