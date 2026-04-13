@@ -109,7 +109,7 @@ def processar_pdfs(conteudo_prova: bytes, conteudo_gabarito: Optional[bytes] = N
 
     msg = client.messages.create(
         model="claude-opus-4-6",
-        max_tokens=16000,
+        max_tokens=32000,
         messages=[{"role": "user", "content": content}]
     )
 

@@ -1616,8 +1616,10 @@ async function pdfProcessar() {
 }
 
 async function pdfPolling(jobId) {
-  for (let i = 0; i < 180; i++) {
-    await sleep(3000)
+  let i = 0
+  while (true) {
+    i++
+    await sleep(4000)
     try {
       const res = await fetch(`${API}/upload-prova/job/${jobId}`)
       const data = await res.json()
@@ -1635,9 +1637,6 @@ async function pdfPolling(jobId) {
       }
     } catch(e) { /* continua tentando */ }
   }
-  clearInterval(pdfLoadTimer)
-  addLog('err', 'Timeout: processamento demorou demais.')
-  pdfMostrarView('pdf-view-upload')
 }
 
 function pdfAtualizaStep() {
