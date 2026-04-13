@@ -111,9 +111,45 @@ Regras:
 - Retorne JSON puro sem nenhum texto antes ou depois"""
 
 
+PROMPT_LOTE = """Você é um especialista em processar provas de concursos públicos brasileiros.
+
+Extraia APENAS as questões de número {inicio} até {fim} do caderno de questões enviado.
+{gabarito_instrucao}
+
+Retorne APENAS JSON válido, sem markdown:
+
+{{
+  "questoes": [
+    {{
+      "numero": {inicio},
+      "enunciado": "texto do enunciado/contexto ou string vazia",
+      "pergunta": "texto completo do comando da questão",
+      "gabarito": "A",
+      "anulada": false,
+      "disciplina": "nome da disciplina",
+      "alternativas": [
+        {{"letra": "A", "texto": "texto", "correta": true}},
+        {{"letra": "B", "texto": "texto", "correta": false}},
+        {{"letra": "C", "texto": "texto", "correta": false}},
+        {{"letra": "D", "texto": "texto", "correta": false}},
+        {{"letra": "E", "texto": "texto", "correta": false}}
+      ]
+    }}
+  ]
+}}
+
+Regras:
+- Extraia SOMENTE questões do {inicio} ao {fim}
+- Marque "correta: true" apenas na alternativa do gabarito
+- QUESTÕES ANULADAS: defina "gabarito": "ANULADA" e "anulada": true
+- PRESERVE todos os caracteres especiais (matematicos, logicos, gregos)
+- Questoes Certo/Errado: apenas 2 alternativas [Certo, Errado]
+- Retorne JSON puro sem nenhum texto antes ou depois"""
+
+
 def processar_pdfs(conteudo_prova: bytes, conteudo_gabarito: Optional[bytes] = None, modelo: str = "sonnet") -> dict:
     """
-    Usa Claude para extrair questões e dados da prova a partir dos PDFs.
+    Processa PDFs em lotes de 50 questões — suporta provas de 650+ questões.
     modelo: "haiku" | "sonnet" | "opus"
     """
     modelos = {
@@ -122,22 +158,119 @@ def processar_pdfs(conteudo_prova: bytes, conteudo_gabarito: Optional[bytes] = N
         "opus":   "claude-opus-4-6",
     }
     model_id = modelos.get(modelo, "claude-sonnet-4-6")
-    print(f"Modelo selecionado: {model_id}")
-
+    print(f"Modelo: {model_id}")
     client = get_claude()
 
-    content = []
+    # Passo 1: descobre total de questões
+    total = _descobrir_total_questoes(client, model_id, conteudo_prova)
+    print(f"Total detectado: {total} questões")
 
-    content.append({
+    # Passo 2: extrai dados da prova
+    dados_prova = _extrair_dados_prova(client, model_id, conteudo_prova)
+
+    # Passo 3: processa em lotes de 50
+    LOTE = 50
+    todas_questoes = []
+    gabarito_instrucao = (
+        "Use o gabarito separado para identificar as respostas corretas."
+        if conteudo_gabarito else
+        "O gabarito está junto na prova."
+    )
+
+    for inicio in range(1, total + 1, LOTE):
+        fim = min(inicio + LOTE - 1, total)
+        print(f"Lote {inicio}-{fim}...")
+        questoes = _processar_lote(
+            client, model_id,
+            conteudo_prova, conteudo_gabarito,
+            inicio, fim, gabarito_instrucao
+        )
+        todas_questoes.extend(questoes)
+        print(f"  → {len(questoes)} questões extraídas")
+
+    print(f"Total extraído: {len(todas_questoes)} questões")
+    return {"dados_prova": dados_prova, "questoes": todas_questoes}
+
+
+def _descobrir_total_questoes(client, model_id: str, conteudo_prova: bytes) -> int:
+    """Pergunta ao Claude quantas questões tem a prova."""
+    try:
+        msg = client.messages.create(
+            model=model_id,
+            max_tokens=50,
+            messages=[{
+                "role": "user",
+                "content": [
+                    {
+                        "type": "document",
+                        "source": {
+                            "type": "base64",
+                            "media_type": "application/pdf",
+                            "data": base64.standard_b64encode(conteudo_prova).decode("utf-8")
+                        }
+                    },
+                    {"type": "text", "text": "Quantas questoes numeradas tem esta prova? Responda APENAS com o numero inteiro."}
+                ]
+            }]
+        )
+        txt = msg.content[0].text.strip()
+        nums = re.findall(r'\d+', txt)
+        return int(nums[0]) if nums else 50
+    except Exception as e:
+        print(f"Erro ao descobrir total: {e}")
+        return 50
+
+
+def _extrair_dados_prova(client, model_id: str, conteudo_prova: bytes) -> dict:
+    """Extrai apenas nome, banca e data da prova."""
+    try:
+        msg = client.messages.create(
+            model=model_id,
+            max_tokens=300,
+            messages=[{
+                "role": "user",
+                "content": [
+                    {
+                        "type": "document",
+                        "source": {
+                            "type": "base64",
+                            "media_type": "application/pdf",
+                            "data": base64.standard_b64encode(conteudo_prova).decode("utf-8")
+                        }
+                    },
+                    {
+                        "type": "text",
+                        "text": 'Extraia os dados desta prova. Retorne APENAS JSON sem markdown:\n{"nome":"nome completo","banca":"nome da banca","id_orgao":null,"data_da_prova":"YYYY-MM-DD ou vazio"}'
+                    }
+                ]
+            }]
+        )
+        txt = msg.content[0].text.strip()
+        txt = re.sub(r"^```json\s*", "", txt)
+        txt = re.sub(r"\s*```$", "", txt).strip()
+        return json.loads(txt)
+    except Exception as e:
+        print(f"Erro dados prova: {e}")
+        return {"nome": "", "banca": "", "id_orgao": None, "data_da_prova": ""}
+
+
+def _processar_lote(client, model_id: str, conteudo_prova: bytes,
+                    conteudo_gabarito: Optional[bytes],
+                    inicio: int, fim: int, gabarito_instrucao: str) -> list:
+    """Extrai questões de inicio até fim."""
+    prompt = PROMPT_LOTE.format(
+        inicio=inicio, fim=fim,
+        gabarito_instrucao=gabarito_instrucao
+    )
+    content = [{
         "type": "document",
         "source": {
             "type": "base64",
             "media_type": "application/pdf",
             "data": base64.standard_b64encode(conteudo_prova).decode("utf-8")
         },
-        "title": "Caderno de Questões"
-    })
-
+        "title": "Caderno de Questoes"
+    }]
     if conteudo_gabarito:
         content.append({
             "type": "document",
@@ -148,86 +281,50 @@ def processar_pdfs(conteudo_prova: bytes, conteudo_gabarito: Optional[bytes] = N
             },
             "title": "Gabarito"
         })
+    content.append({"type": "text", "text": prompt})
 
-    content.append({
-        "type": "text",
-        "text": PROMPT_EXTRACAO_PDF
-    })
-
-    msg = client.messages.create(
-        model=model_id,
-        max_tokens=32000,
-        messages=[{"role": "user", "content": content}]
-    )
-
-    txt = msg.content[0].text.strip()
-    txt = re.sub(r"^```json\s*", "", txt)
-    txt = re.sub(r"\s*```$", "", txt)
-    txt = txt.strip()
-
-    # Tenta parse direto
     try:
-        dados = json.loads(txt)
-    except json.JSONDecodeError:
-        # Tenta extrair o JSON com regex
-        m = re.search(r'\{.*\}', txt, re.DOTALL)
-        if not m:
-            raise ValueError("Claude não retornou JSON válido.")
+        msg = client.messages.create(
+            model=model_id,
+            max_tokens=8000,
+            messages=[{"role": "user", "content": content}]
+        )
+        txt = msg.content[0].text.strip()
+        txt = re.sub(r"^```json\s*", "", txt)
+        txt = re.sub(r"\s*```$", "", txt).strip()
         try:
-            dados = json.loads(m.group())
+            return json.loads(txt).get("questoes", [])
         except json.JSONDecodeError:
-            # JSON truncado — tenta recuperar questões parciais
-            dados = _recuperar_json_truncado(txt)
+            m = re.search(r'\{.*\}', txt, re.DOTALL)
+            if m:
+                try:
+                    return json.loads(m.group()).get("questoes", [])
+                except Exception:
+                    pass
+            return _recuperar_questoes_parciais(txt)
+    except Exception as e:
+        print(f"Erro lote {inicio}-{fim}: {e}")
+        return []
 
-    if "dados_prova" not in dados or "questoes" not in dados:
-        raise ValueError("Estrutura JSON incompleta retornada pelo Claude.")
 
-    return dados
-
-
-def _recuperar_json_truncado(txt: str) -> dict:
-    """
-    Quando o Claude trunca o JSON no meio (resposta muito longa),
-    tenta recuperar os dados parciais já extraídos.
-    """
-    # Extrai dados_prova
-    dados_prova = {}
-    m = re.search(r'"dados_prova"\s*:\s*\{([^}]+)\}', txt, re.DOTALL)
-    if m:
-        try:
-            dados_prova = json.loads('{' + m.group(1) + '}')
-        except Exception:
-            pass
-
-    # Extrai questões completas (objetos fechados com })
+def _recuperar_questoes_parciais(txt: str) -> list:
+    """Recupera questões de um JSON truncado."""
     questoes = []
-    # Encontra o array de questões
     arr_match = re.search(r'"questoes"\s*:\s*\[(.+)', txt, re.DOTALL)
     if arr_match:
         arr_txt = arr_match.group(1)
-        # Extrai objetos JSON completos um a um
-        depth = 0
-        start = None
+        depth = 0; start = None
         for i, ch in enumerate(arr_txt):
             if ch == '{':
-                if depth == 0:
-                    start = i
+                if depth == 0: start = i
                 depth += 1
             elif ch == '}':
                 depth -= 1
                 if depth == 0 and start is not None:
-                    obj_txt = arr_txt[start:i+1]
-                    try:
-                        questoes.append(json.loads(obj_txt))
-                    except Exception:
-                        pass
+                    try: questoes.append(json.loads(arr_txt[start:i+1]))
+                    except Exception: pass
                     start = None
-
-    if not questoes:
-        raise ValueError(f"Não foi possível recuperar questões do JSON truncado.")
-
-    print(f"JSON truncado recuperado: {len(questoes)} questões extraídas.")
-    return {"dados_prova": dados_prova, "questoes": questoes}
+    return questoes
 
 
 # ── SALVAR NO BANCO (fiel ao gerenciador PHP) ─────────────────────────────────
