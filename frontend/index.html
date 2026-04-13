@@ -303,6 +303,9 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'DM San
 .cascade-node.hidden,.cascade-leaf.hidden{display:none;}
 .cascade-empty{padding:14px;text-align:center;font-size:12px;color:var(--text3);}
 
+.pdf-modelo-btn{background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius);padding:10px 12px;cursor:pointer;transition:all .15s;text-align:center}
+.pdf-modelo-btn:hover{border-color:var(--border2)}
+.pdf-modelo-btn.active{background:var(--bg);border-color:var(--purple2);box-shadow:0 0 0 1px var(--purple3)}
 /* ── UPLOAD PDF ── */
 .upload-zone{border:2px dashed var(--border2);border-radius:var(--radius-lg);padding:28px 18px;text-align:center;cursor:pointer;transition:all .2s;background:var(--bg3);margin-bottom:10px}
 .upload-zone:hover,.upload-zone.drag{border-color:var(--purple2);background:var(--purple-bg)}
@@ -532,7 +535,21 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'DM San
                 </div>
                 <input type="file" id="pdf-file1" accept=".pdf" style="display:none" onchange="pdfSetFile1(this)">
 
-                <div class="upload-row2">
+                <!-- SELETOR DE MODELO -->
+                <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:12px" id="pdf-modelo-wrap">
+                  <div class="pdf-modelo-btn active" data-modelo="haiku" onclick="pdfSetModelo(this)">
+                    <div style="font-size:13px;font-weight:700;color:var(--teal)">⚡ Rápido</div>
+                    <div style="font-size:10px;color:var(--text3);margin-top:2px">Haiku · ~$0.03/prova</div>
+                  </div>
+                  <div class="pdf-modelo-btn" data-modelo="sonnet" onclick="pdfSetModelo(this)">
+                    <div style="font-size:13px;font-weight:700;color:var(--purple)">⚖ Equilibrado</div>
+                    <div style="font-size:10px;color:var(--text3);margin-top:2px">Sonnet · ~$0.15/prova</div>
+                  </div>
+                  <div class="pdf-modelo-btn" data-modelo="opus" onclick="pdfSetModelo(this)">
+                    <div style="font-size:13px;font-weight:700;color:var(--amber)">🎯 Preciso</div>
+                    <div style="font-size:10px;color:var(--text3);margin-top:2px">Opus · ~$1.00/prova</div>
+                  </div>
+                </div>
                   <div class="upload-optional" id="pdf-drop2"
                     ondragover="pdfEv(event,'pdf-drop2',true)" ondragleave="pdfEv(event,'pdf-drop2',false)"
                     ondrop="pdfDrop(event,'pdf-drop2','pdf-file2')"
@@ -1527,6 +1544,15 @@ function filtrarQuestoes(query) {
 
 function sleep(ms) { return new Promise(r => setTimeout(r, ms)) }
 
+// ── MODELO ────────────────────────────────────────────────────────────────────
+let pdfModelo = 'haiku'
+
+function pdfSetModelo(el) {
+  document.querySelectorAll('.pdf-modelo-btn').forEach(b => b.classList.remove('active'))
+  el.classList.add('active')
+  pdfModelo = el.dataset.modelo
+}
+
 // ── SELECT DE PROVAS ──────────────────────────────────────────────────────────
 let pdfProvaSelecionada = null
 let pdfBuscaTimer = null
@@ -1663,6 +1689,7 @@ async function pdfProcessar() {
     const fd = new FormData()
     fd.append('prova', pdfFile1)
     if (pdfFile2) fd.append('gabarito', pdfFile2)
+    fd.append('modelo', pdfModelo)
 
     const res = await fetch(`${API}/upload-prova/processar`, { method: 'POST', body: fd })
     if (!res.ok) throw new Error(`HTTP ${res.status}`)

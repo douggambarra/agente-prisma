@@ -109,11 +109,19 @@ Regras:
 - Retorne JSON puro sem nenhum texto antes ou depois"""
 
 
-def processar_pdfs(conteudo_prova: bytes, conteudo_gabarito: Optional[bytes] = None) -> dict:
+def processar_pdfs(conteudo_prova: bytes, conteudo_gabarito: Optional[bytes] = None, modelo: str = "sonnet") -> dict:
     """
     Usa Claude para extrair questões e dados da prova a partir dos PDFs.
-    Retorna dict com dados_prova e lista de questoes para o preview.
+    modelo: "haiku" | "sonnet" | "opus"
     """
+    modelos = {
+        "haiku":  "claude-haiku-4-5-20251001",
+        "sonnet": "claude-sonnet-4-6",
+        "opus":   "claude-opus-4-6",
+    }
+    model_id = modelos.get(modelo, "claude-sonnet-4-6")
+    print(f"Modelo selecionado: {model_id}")
+
     client = get_claude()
 
     content = []
@@ -145,7 +153,7 @@ def processar_pdfs(conteudo_prova: bytes, conteudo_gabarito: Optional[bytes] = N
     })
 
     msg = client.messages.create(
-        model="claude-opus-4-6",
+        model=model_id,
         max_tokens=32000,
         messages=[{"role": "user", "content": content}]
     )

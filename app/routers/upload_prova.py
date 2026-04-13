@@ -34,10 +34,10 @@ class ConfirmarSalvamentoRequest(BaseModel):
     dados_prova: DadosProva
     questoes: List[QuestaoPreview]
 
-def executar_processamento(job_id: str, conteudo_prova: bytes, conteudo_gabarito: Optional[bytes]):
+def executar_processamento(job_id: str, conteudo_prova: bytes, conteudo_gabarito: Optional[bytes], modelo: str):
     try:
         jobs[job_id]["status"] = "processando"
-        resultado = processar_pdfs(conteudo_prova, conteudo_gabarito)
+        resultado = processar_pdfs(conteudo_prova, conteudo_gabarito, modelo)
         jobs[job_id]["status"] = "aguardando_confirmacao"
         jobs[job_id]["resultado"] = resultado
     except Exception as e:
@@ -46,7 +46,6 @@ def executar_processamento(job_id: str, conteudo_prova: bytes, conteudo_gabarito
 
 @router.get("/provas")
 def listar_provas(busca: str = ""):
-    """Lista provas cadastradas no gerenciador para seleção."""
     conn = get_connection()
     cursor = conn.cursor(dictionary=True)
     try:
@@ -78,7 +77,8 @@ def listar_provas(busca: str = ""):
 async def processar_upload(
     background_tasks: BackgroundTasks,
     prova: UploadFile = File(...),
-    gabarito: Optional[UploadFile] = File(None)
+    gabarito: Optional[UploadFile] = File(None),
+    modelo: str = "sonnet"
 ):
     if not prova.filename.lower().endswith(".pdf"):
         raise HTTPException(status_code=400, detail="Arquivo de prova deve ser PDF.")
@@ -88,9 +88,11 @@ async def processar_upload(
         if not gabarito.filename.lower().endswith(".pdf"):
             raise HTTPException(status_code=400, detail="Gabarito deve ser PDF.")
         conteudo_gabarito = await gabarito.read()
+    if modelo not in ("haiku", "sonnet", "opus"):
+        modelo = "sonnet"
     job_id = str(uuid.uuid4())[:8]
     jobs[job_id] = {"status": "aguardando", "resultado": None, "erro": None}
-    background_tasks.add_task(executar_processamento, job_id, conteudo_prova, conteudo_gabarito)
+    background_tasks.add_task(executar_processamento, job_id, conteudo_prova, conteudo_gabarito, modelo)
     return {"job_id": job_id, "status": "iniciado"}
 
 @router.get("/job/{job_id}")
