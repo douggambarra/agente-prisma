@@ -11,6 +11,41 @@ from app.database import get_connection
 def encode_latin1(texto: str) -> str:
     if not texto:
         return ""
+    # Substituir símbolos que não existem em latin1 por equivalentes legíveis
+    substituicoes = {
+        # Lógica
+        '∧': ' ^ ',   '∨': ' v ',   '¬': '~',
+        '→': '->',    '↔': '<->',   '⊕': ' XOR ',
+        '∀': '(A)',   '∃': '(E)',   '⊢': '|-',
+        # Matemática
+        '≤': '<=',    '≥': '>=',    '≠': '!=',
+        '≈': '~=',    '∞': 'inf',   '∑': 'E',
+        '∏': 'PI',    '√': 'sqrt',  '∫': 'int',
+        '∂': 'd',     '∈': ' in ',  '∉': ' !in ',
+        '⊂': ' C ',   '⊃': ' D ',  '∩': ' n ',
+        '∪': ' U ',   '∅': '{}',    '×': 'x',
+        '÷': '/',     '±': '+/-',   '·': '.',
+        # Gregas maiúsculas
+        'Α': 'A', 'Β': 'B', 'Γ': 'G', 'Δ': 'D', 'Ε': 'E',
+        'Ζ': 'Z', 'Η': 'H', 'Θ': 'T', 'Ι': 'I', 'Κ': 'K',
+        'Λ': 'L', 'Μ': 'M', 'Ν': 'N', 'Ξ': 'X', 'Ο': 'O',
+        'Π': 'P', 'Ρ': 'R', 'Σ': 'S', 'Τ': 'T', 'Υ': 'U',
+        'Φ': 'F', 'Χ': 'X', 'Ψ': 'Y', 'Ω': 'W',
+        # Gregas minúsculas
+        'α': 'alfa',  'β': 'beta',  'γ': 'gama',  'δ': 'delta',
+        'ε': 'eps',   'ζ': 'zeta',  'η': 'eta',   'θ': 'teta',
+        'ι': 'iota',  'κ': 'kapa',  'λ': 'lambda','μ': 'mi',
+        'ν': 'ni',    'ξ': 'xi',    'ο': 'o',     'π': 'pi',
+        'ρ': 'ro',    'σ': 'sigma', 'τ': 'tau',   'υ': 'ipsilon',
+        'φ': 'fi',    'χ': 'qui',   'ψ': 'psi',   'ω': 'omega',
+        # Outros comuns em provas
+        '°': 'o',     '²': '2',     '³': '3',     '¹': '1',
+        '½': '1/2',   '¼': '1/4',   '¾': '3/4',
+        '\u2019': "'", '\u201c': '"', '\u201d': '"',
+        '\u2013': '-', '\u2014': '-', '\u2026': '...',
+    }
+    for simbolo, substituto in substituicoes.items():
+        texto = texto.replace(simbolo, substituto)
     try:
         return texto.encode("latin-1", errors="replace").decode("latin-1")
     except Exception:
@@ -69,6 +104,8 @@ Regras:
 - Marque "correta: true" apenas na alternativa do gabarito
 - Se gabarito não identificado: todas as alternativas com "correta: false" e "gabarito": ""
 - Questões Certo/Errado: apenas 2 alternativas [{"letra":"C","texto":"Certo",...},{"letra":"E","texto":"Errado",...}]
+- PRESERVE todos os caracteres especiais exatamente como aparecem no PDF: símbolos matemáticos (∑, √, π, ≤, ≥, ≠, ×, ÷), lógicos (∧, ∨, ¬, →, ↔, ∀, ∃), letras gregas (α, β, γ, θ), acentos e cedilha do português (ã, ç, é, etc.), e qualquer outro símbolo especial
+- NUNCA substitua símbolos especiais por texto (ex: não escreva "nao-p" no lugar de "¬p", nem "V" no lugar de "∨")
 - Retorne JSON puro sem nenhum texto antes ou depois"""
 
 
