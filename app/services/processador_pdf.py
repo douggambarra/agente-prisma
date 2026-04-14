@@ -108,6 +108,7 @@ Regras:
 - QUESTÕES ANULADAS: se no gabarito a questão aparecer marcada como "ANULADA", "Anulada", "*" (asterisco no número), "A" com indicação especial, ou qualquer outra marcação que indique anulação, defina "gabarito": "ANULADA" e "anulada": true
 - PRESERVE todos os caracteres especiais exatamente como aparecem no PDF: símbolos matemáticos (∑, √, π, ≤, ≥, ≠, ×, ÷), lógicos (∧, ∨, ¬, →, ↔, ∀, ∃), letras gregas (α, β, γ, θ), acentos e cedilha do português (ã, ç, é, etc.), e qualquer outro símbolo especial
 - NUNCA substitua símbolos especiais por texto (ex: não escreva "nao-p" no lugar de "¬p", nem "V" no lugar de "∨")
+- ENUNCIADO: preencha "enunciado" SOMENTE se houver um texto base longo (artigo, trecho literário, citação, tabela de dados, lei transcrita, etc.) que serve de contexto para a questão. Textos com mais de 3 linhas que antecedem a pergunta geralmente são enunciado. O comando da questão em si ("Assinale...", "É correto afirmar...", "De acordo com...") NUNCA é enunciado — vai sempre em "pergunta". Se não houver texto base, deixe "enunciado" como string vazia ""
 - Retorne JSON puro sem nenhum texto antes ou depois"""
 
 
@@ -144,6 +145,7 @@ Regras:
 - QUESTÕES ANULADAS: gabarito:"ANULADA" e anulada:true
 - PRESERVE todos os caracteres especiais (simbolos matematicos, logicos, gregos)
 - Questões Certo/Errado: apenas 2 alternativas [Certo, Errado]
+- ENUNCIADO: preencha "enunciado" SOMENTE se houver um texto base longo (artigo, trecho literário, citação, tabela de dados, lei transcrita, etc.) que serve de contexto para a questão. Textos com mais de 3 linhas que antecedem a pergunta geralmente são enunciado. O comando da questão em si ("Assinale...", "É correto afirmar...", "De acordo com...") NUNCA é enunciado — vai sempre em "pergunta". Se não houver texto base, deixe "enunciado" como string vazia ""
 - Retorne JSON puro sem texto antes ou depois"""
 
 PROMPT_DADOS_PROVA = """Analise o texto abaixo de uma prova de concurso e extraia os dados.
@@ -317,7 +319,7 @@ TEXTO:
 Retorne APENAS JSON sem markdown:
 {{"questoes":[{{"numero":{inicio},"enunciado":"","pergunta":"texto","gabarito":"A","anulada":false,"disciplina":"Disciplina","alternativas":[{{"letra":"A","texto":"texto","correta":true}},{{"letra":"B","texto":"texto","correta":false}},{{"letra":"C","texto":"texto","correta":false}},{{"letra":"D","texto":"texto","correta":false}},{{"letra":"E","texto":"texto","correta":false}}]}}]}}
 
-Regras: extraia so {inicio}-{fim}, correta:true apenas no gabarito, ANULADAS: gabarito:ANULADA anulada:true, preserva simbolos especiais, Certo/Errado = 2 alternativas, JSON puro."""
+Regras: extraia so {inicio}-{fim}, correta:true apenas no gabarito, ANULADAS: gabarito:ANULADA anulada:true, preserva simbolos especiais, Certo/Errado = 2 alternativas, ENUNCIADO apenas se houver texto base longo (artigo/citacao/tabela com mais de 3 linhas) antes da questao — senao deixe enunciado como string vazia "", o comando da questao vai sempre em pergunta, JSON puro."""
 
     for t in range(3):
         try:
@@ -350,7 +352,7 @@ IMPORTANTE: Este PDF pode ter layout em DUAS COLUNAS. Leia a coluna esquerda int
 Retorne APENAS JSON sem markdown:
 {{"questoes":[{{"numero":1,"enunciado":"","pergunta":"texto","gabarito":"A","anulada":false,"disciplina":"Disciplina","alternativas":[{{"letra":"A","texto":"texto","correta":true}},{{"letra":"B","texto":"texto","correta":false}},{{"letra":"C","texto":"texto","correta":false}},{{"letra":"D","texto":"texto","correta":false}},{{"letra":"E","texto":"texto","correta":false}}]}}]}}
 
-Regras: extraia TODAS as questoes desta pagina (pelo numero impresso), correta:true apenas no gabarito, ANULADAS: gabarito:ANULADA anulada:true, preserva simbolos especiais, Certo/Errado = 2 alternativas, JSON puro."""
+Regras: extraia TODAS as questoes desta pagina (pelo numero impresso), correta:true apenas no gabarito, ANULADAS: gabarito:ANULADA anulada:true, preserva simbolos especiais, Certo/Errado = 2 alternativas, ENUNCIADO apenas se houver texto base longo (artigo/citacao/tabela com mais de 3 linhas) antes da questao — senao deixe enunciado como string vazia "", o comando da questao vai sempre em pergunta, JSON puro."""
 
     content = [{"type":"document","source":{"type":"base64","media_type":"application/pdf",
                 "data":base64.standard_b64encode(conteudo_grupo).decode()},"title":"Paginas da prova"}]
