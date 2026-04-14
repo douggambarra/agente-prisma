@@ -111,13 +111,10 @@ Regras:
 - Retorne JSON puro sem nenhum texto antes ou depois"""
 
 
-PROMPT_TEXTO_LOTE = """Você é um especialista em processar provas de concursos públicos brasileiros.
+PROMPT_EXTRACAO_PDF_PAGINAS = """Você é um especialista em processar provas de concursos públicos brasileiros.
 
-Abaixo está o TEXTO EXTRAÍDO de uma prova de concurso. Extraia APENAS as questões de número {inicio} até {fim}.
-{gabarito_texto}
-
-TEXTO DA PROVA:
-{texto_prova}
+Analise as páginas do PDF enviado e extraia APENAS as questões de número {inicio} até {fim}.
+{gabarito_info}
 
 Retorne APENAS JSON válido, sem markdown:
 
@@ -143,11 +140,11 @@ Retorne APENAS JSON válido, sem markdown:
 
 Regras:
 - Extraia SOMENTE questões do {inicio} ao {fim}
-- Marque "correta: true" apenas na alternativa do gabarito
-- QUESTÕES ANULADAS: defina "gabarito": "ANULADA" e "anulada": true
-- PRESERVE todos os caracteres especiais (matematicos, logicos, gregos)
-- Questoes Certo/Errado: apenas 2 alternativas [Certo, Errado]
-- Retorne JSON puro sem nenhum texto antes ou depois"""
+- Marque correta:true apenas na alternativa do gabarito
+- QUESTÕES ANULADAS: gabarito:"ANULADA" e anulada:true
+- PRESERVE todos os caracteres especiais (simbolos matematicos, logicos, gregos)
+- Questões Certo/Errado: apenas 2 alternativas [Certo, Errado]
+- Retorne JSON puro sem texto antes ou depois"""
 
 PROMPT_DADOS_PROVA = """Analise o texto abaixo de uma prova de concurso e extraia os dados.
 Retorne APENAS JSON sem markdown:
@@ -157,25 +154,13 @@ TEXTO:
 {texto}"""
 
 
-def _extrair_texto_pdf(conteudo: bytes) -> str:
-    """Extrai texto de um PDF usando pypdf."""
-    try:
-        import io
-        from pypdf import PdfReader
-        reader = PdfReader(io.BytesIO(conteudo))
-        texto = ""
-        for page in reader.pages:
-            texto += page.extract_text() + "\n"
-        return texto
-    except Exception as e:
-        print(f"Erro ao extrair texto do PDF: {e}")
-        return ""
-
-
-def processar_pdfs(conteudo_prova: bytes, conteudo_gabarito: Optional[bytes] = None, modelo: str = "sonnet", progresso: dict = None) -> dict:
+def processar_pdfs(conteudo_prova: bytes, conteudo_gabarito: Optional[bytes] = None,
+                   modelo: str = "sonnet", progresso: dict = None,
+                   colunas: int = 1) -> dict:
     """
-    Extrai texto do PDF uma única vez e processa em lotes de texto.
-    Evita reenviar o PDF inteiro a cada lote — resolve o rate limit.
+    Processa PDFs com estrategia baseada no numero de colunas:
+    - 1 coluna: extrai texto e processa por texto (rapido, barato)
+    - 2 ou 3 colunas: divide PDF por grupos de paginas e envia ao Claude (mais preciso)
     """
     import time
 
@@ -193,271 +178,298 @@ def processar_pdfs(conteudo_prova: bytes, conteudo_gabarito: Optional[bytes] = N
         "opus":   "claude-opus-4-6",
     }
     model_id = modelos.get(modelo, "claude-sonnet-4-6")
-    print(f"Modelo: {model_id}")
+    print(f"Modelo: {model_id} | Colunas: {colunas}")
     client = get_claude()
 
-    # Passo 1: extrai texto dos PDFs (uma única vez)
-    atualizar("Extraindo texto dos PDFs...")
+    # Extrai texto para contar questoes e dados da prova
+    atualizar("Extraindo texto do PDF...")
     texto_prova = _extrair_texto_pdf(conteudo_prova)
     texto_gabarito = _extrair_texto_pdf(conteudo_gabarito) if conteudo_gabarito else ""
+    print(f"Texto extraido: {len(texto_prova)} chars")
 
-    print(f"Texto extraído: {len(texto_prova)} caracteres")
-    print(f"Primeiros 500 chars: {texto_prova[:500]}")
-    print(f"Últimos 500 chars: {texto_prova[-500:]}")
-
-    if not texto_prova:
-        # Fallback: PDF é imagem, usa visão do Claude (só 1 chamada)
-        atualizar("PDF é imagem — usando visão da IA (1 chamada)...")
-        return _processar_pdf_visao(client, model_id, conteudo_prova, conteudo_gabarito, progresso)
-
-    # Passo 2: extrai dados da prova a partir do texto
+    # Conta questoes e extrai dados sempre pelo texto
     atualizar("Identificando dados da prova...")
     dados_prova = _extrair_dados_texto(client, model_id, texto_prova[:3000])
 
-    # Passo 3: conta questões
-    atualizar("Contando questões...")
+    atualizar("Contando questoes...")
     total = _contar_questoes_texto(texto_prova)
-    print(f"Total detectado: {total} questões")
+    print(f"Total detectado: {total} questoes")
 
-    # Passo 4: processa em lotes de texto (sem reenviar PDF)
+    gabarito_texto = f"\nGABARITO:\n{texto_gabarito[:5000]}" if texto_gabarito else ""
+
+    if colunas == 1 and texto_prova:
+        # 1 COLUNA: processa por texto — sem reenviar PDF
+        return _processar_por_texto(
+            client, model_id, texto_prova, gabarito_texto,
+            dados_prova, total, atualizar
+        )
+    else:
+        # 2 ou 3 COLUNAS: divide PDF por paginas e envia ao Claude
+        # Paginas por grupo: 2 col = 3 pags, 3 col = 2 pags (menos questoes por pagina)
+        pags_por_grupo = 3 if colunas == 2 else 2
+        return _processar_por_paginas(
+            client, model_id,
+            conteudo_prova, conteudo_gabarito,
+            dados_prova, total, gabarito_texto,
+            pags_por_grupo, atualizar
+        )
+
+
+def _processar_por_texto(client, model_id, texto_prova, gabarito_texto,
+                          dados_prova, total, atualizar):
+    """Estrategia 1 coluna: divide texto em blocos e processa por texto."""
+    import time
     LOTE = 50
     total_lotes = max(1, (total + LOTE - 1) // LOTE)
     todas_questoes = []
 
-    gabarito_texto = f"\nGABARITO:\n{texto_gabarito[:5000]}" if texto_gabarito else ""
-
-    # Passo 3.5: divide texto em blocos por questão
-    atualizar("Dividindo texto por questões...")
-    blocos = _dividir_texto_por_questoes(texto_prova, total, LOTE)
-    print(f"Blocos encontrados: {len(blocos)}")
+    # Divide texto em blocos por questao
+    blocos = _dividir_texto_por_questoes(texto_prova, total)
 
     for idx, inicio in enumerate(range(1, total + 1, LOTE), start=1):
         fim = min(inicio + LOTE - 1, total)
-        atualizar(
-            f"Extraindo questões {inicio} a {fim}...",
-            lote_atual=idx, total_lotes=total_lotes,
-            questoes=len(todas_questoes)
-        )
+        atualizar(f"Extraindo questoes {inicio} a {fim}...",
+                  lote_atual=idx, total_lotes=total_lotes, questoes=len(todas_questoes))
 
-        # Monta texto apenas com as questões deste lote
-        if blocos and len(blocos) > 1:
-            texto_lote = ""
-            for n in range(inicio, fim + 1):
-                if n in blocos:
-                    texto_lote += blocos[n] + "\n"
-            if not texto_lote:
-                texto_lote = texto_prova  # fallback
+        # Monta trecho apenas com questoes deste lote
+        if len(blocos) > 1:
+            trecho = "".join(blocos.get(n, "") for n in range(inicio, fim + 1))
+            if not trecho.strip():
+                trecho = texto_prova
         else:
-            texto_lote = texto_prova
+            # Fallback proporcional
+            total_chars = len(texto_prova)
+            c_por_q = total_chars // max(total, 1)
+            i_char = max(0, (inicio - 1) * c_por_q - 1000)
+            f_char = min(total_chars, fim * c_por_q + 1000)
+            trecho = texto_prova[i_char:f_char]
 
-        questoes = _processar_lote_texto(
-            client, model_id,
-            texto_lote, gabarito_texto,
-            inicio, fim
-        )
+        questoes = _chamar_claude_texto(client, model_id, trecho, gabarito_texto, inicio, fim)
         todas_questoes.extend(questoes)
-        atualizar(
-            f"Lote {idx}/{total_lotes} concluído — {len(todas_questoes)} questões",
-            lote_atual=idx, total_lotes=total_lotes,
-            questoes=len(todas_questoes)
-        )
+        atualizar(f"Lote {idx}/{total_lotes} concluido — {len(todas_questoes)} questoes",
+                  lote_atual=idx, total_lotes=total_lotes, questoes=len(todas_questoes))
 
-        # Pequena pausa entre lotes (texto é muito menor que PDF)
         if idx < total_lotes:
             time.sleep(5)
 
-    atualizar(f"Pronto! {len(todas_questoes)} questões extraídas.", total_lotes, total_lotes, len(todas_questoes))
+    atualizar(f"Pronto! {len(todas_questoes)} questoes.", total_lotes, total_lotes, len(todas_questoes))
     return {"dados_prova": dados_prova, "questoes": todas_questoes}
 
 
+def _processar_por_paginas(client, model_id, conteudo_prova, conteudo_gabarito,
+                            dados_prova, total, gabarito_texto, pags_por_grupo, atualizar):
+    """Estrategia 2/3 colunas: divide PDF em grupos de paginas."""
+    import time, io
+    from pypdf import PdfReader, PdfWriter
+
+    paginas = _get_paginas_pdf(conteudo_prova)
+    if not paginas:
+        raise ValueError("Nao foi possivel extrair paginas do PDF.")
+
+    total_paginas = len(paginas)
+    grupos = [paginas[i:i+pags_por_grupo] for i in range(0, total_paginas, pags_por_grupo)]
+    total_grupos = len(grupos)
+    todas_questoes = []
+
+    print(f"Total de paginas: {total_paginas} | Grupos de {pags_por_grupo}: {total_grupos}")
+
+    for idx, grupo in enumerate(grupos, start=1):
+        q_inicio = round((idx - 1) / total_grupos * total) + 1
+        q_fim = round(idx / total_grupos * total)
+
+        pag_ini = (idx-1) * pags_por_grupo + 1
+        pag_fim = min(idx * pags_por_grupo, total_paginas)
+        atualizar(f"Paginas {pag_ini}-{pag_fim} (questoes ~{q_inicio}-{q_fim})...",
+                  lote_atual=idx, total_lotes=total_grupos, questoes=len(todas_questoes))
+
+        # Monta PDF do grupo
+        try:
+            writer = PdfWriter()
+            for pag_bytes in grupo:
+                r = PdfReader(io.BytesIO(pag_bytes))
+                writer.add_page(r.pages[0])
+            buf = io.BytesIO()
+            writer.write(buf)
+            conteudo_grupo = buf.getvalue()
+        except Exception as e:
+            print(f"Erro grupo {idx}: {e}")
+            continue
+
+        questoes = _chamar_claude_pdf(client, model_id, conteudo_grupo,
+                                       conteudo_gabarito, gabarito_texto, q_inicio, q_fim)
+        todas_questoes.extend(questoes)
+        atualizar(f"Grupo {idx}/{total_grupos} concluido — {len(todas_questoes)} questoes",
+                  lote_atual=idx, total_lotes=total_grupos, questoes=len(todas_questoes))
+
+        if idx < total_grupos:
+            time.sleep(5)
+
+    atualizar(f"Pronto! {len(todas_questoes)} questoes.", total_grupos, total_grupos, len(todas_questoes))
+    return {"dados_prova": dados_prova, "questoes": todas_questoes}
+
+
+def _chamar_claude_texto(client, model_id, trecho, gabarito_texto, inicio, fim):
+    """Chama Claude com texto puro."""
+    import time
+    prompt = f"""Extraia APENAS as questoes de numero {inicio} ate {fim} do texto abaixo.
+{gabarito_texto}
+
+TEXTO:
+{trecho[:35000]}
+
+Retorne APENAS JSON sem markdown:
+{{"questoes":[{{"numero":{inicio},"enunciado":"","pergunta":"texto","gabarito":"A","anulada":false,"disciplina":"Disciplina","alternativas":[{{"letra":"A","texto":"texto","correta":true}},{{"letra":"B","texto":"texto","correta":false}},{{"letra":"C","texto":"texto","correta":false}},{{"letra":"D","texto":"texto","correta":false}},{{"letra":"E","texto":"texto","correta":false}}]}}]}}
+
+Regras: extraia so {inicio}-{fim}, correta:true apenas no gabarito, ANULADAS: gabarito:ANULADA anulada:true, preserva simbolos especiais, Certo/Errado = 2 alternativas, JSON puro."""
+
+    for t in range(3):
+        try:
+            msg = client.messages.create(model=model_id, max_tokens=8000,
+                messages=[{"role":"user","content":prompt}])
+            txt = msg.content[0].text.strip()
+            txt = re.sub(r"^```json\s*","",txt); txt = re.sub(r"\s*```$","",txt).strip()
+            try: return json.loads(txt).get("questoes",[])
+            except: pass
+            m = re.search(r'\{.*\}',txt,re.DOTALL)
+            if m:
+                try: return json.loads(m.group()).get("questoes",[])
+                except: pass
+            return _recuperar_questoes_parciais(txt)
+        except Exception as e:
+            if 'rate_limit' in str(e).lower() and t < 2:
+                print(f"Rate limit, aguardando 30s..."); time.sleep(30); continue
+            print(f"Erro lote {inicio}-{fim}: {e}"); return []
+    return []
+
+
+def _chamar_claude_pdf(client, model_id, conteudo_grupo, conteudo_gabarito,
+                        gabarito_texto, inicio, fim):
+    """Chama Claude com PDF de paginas."""
+    import time
+    prompt = f"""Extraia APENAS as questoes de numero {inicio} ate {fim} deste PDF.
+{gabarito_texto}
+
+Retorne APENAS JSON sem markdown:
+{{"questoes":[{{"numero":{inicio},"enunciado":"","pergunta":"texto","gabarito":"A","anulada":false,"disciplina":"Disciplina","alternativas":[{{"letra":"A","texto":"texto","correta":true}},{{"letra":"B","texto":"texto","correta":false}},{{"letra":"C","texto":"texto","correta":false}},{{"letra":"D","texto":"texto","correta":false}},{{"letra":"E","texto":"texto","correta":false}}]}}]}}
+
+Regras: extraia so {inicio}-{fim}, correta:true apenas no gabarito, ANULADAS: gabarito:ANULADA anulada:true, preserva simbolos especiais, Certo/Errado = 2 alternativas, JSON puro."""
+
+    content = [{"type":"document","source":{"type":"base64","media_type":"application/pdf",
+                "data":base64.standard_b64encode(conteudo_grupo).decode()},"title":f"Paginas {inicio}-{fim}"}]
+    if conteudo_gabarito:
+        content.append({"type":"document","source":{"type":"base64","media_type":"application/pdf",
+                        "data":base64.standard_b64encode(conteudo_gabarito).decode()},"title":"Gabarito"})
+    content.append({"type":"text","text":prompt})
+
+    for t in range(3):
+        try:
+            msg = client.messages.create(model=model_id, max_tokens=8000,
+                messages=[{"role":"user","content":content}])
+            txt = msg.content[0].text.strip()
+            txt = re.sub(r"^```json\s*","",txt); txt = re.sub(r"\s*```$","",txt).strip()
+            try: return json.loads(txt).get("questoes",[])
+            except: pass
+            m = re.search(r'\{.*\}',txt,re.DOTALL)
+            if m:
+                try: return json.loads(m.group()).get("questoes",[])
+                except: pass
+            return _recuperar_questoes_parciais(txt)
+        except Exception as e:
+            if 'rate_limit' in str(e).lower() and t < 2:
+                print(f"Rate limit, aguardando 30s..."); time.sleep(30); continue
+            print(f"Erro grupo {inicio}-{fim}: {e}"); return []
+    return []
+
+
+def _extrair_texto_pdf(conteudo: bytes) -> str:
+    """Extrai texto pagina por pagina preservando ordem."""
+    try:
+        import io
+        from pypdf import PdfReader
+        reader = PdfReader(io.BytesIO(conteudo))
+        paginas = []
+        for i, page in enumerate(reader.pages):
+            txt = page.extract_text() or ""
+            if txt.strip():
+                paginas.append(f"[PAGINA {i+1}]\n{txt}")
+        return "\n\n".join(paginas)
+    except Exception as e:
+        print(f"Erro ao extrair texto: {e}")
+        return ""
+
+
+def _get_paginas_pdf(conteudo: bytes):
+    """Retorna lista de bytes de cada pagina como PDF individual."""
+    try:
+        import io
+        from pypdf import PdfReader, PdfWriter
+        reader = PdfReader(io.BytesIO(conteudo))
+        paginas = []
+        for page in reader.pages:
+            writer = PdfWriter()
+            writer.add_page(page)
+            buf = io.BytesIO()
+            writer.write(buf)
+            paginas.append(buf.getvalue())
+        return paginas
+    except Exception as e:
+        print(f"Erro ao extrair paginas: {e}")
+        return []
+
+
 def _contar_questoes_texto(texto: str) -> int:
-    """Conta questões pelo maior número de questão encontrado no texto."""
-    # Padrões específicos de questão — evita pegar anos, valores, etc.
     padroes = [
-        r'QUEST[ÃA]O\s+(\d+)',           # QUESTÃO 70
-        r'Quest[ãa]o\s+(\d+)',            # Questão 70
-        r'^\s*(\d{1,3})\s*[–\-]\s+[A-Z]', # 70 – Assinale
-        r'^\s*(\d{1,3})\s*\.\s+[A-Z]',    # 70. Assinale
-        r'^\s*(\d{1,3})\s*\)\s*[A-Z]',    # 70) Assinale
+        r'QUEST[\xc3\x83A]O\s+(\d+)',
+        r'Quest[\xc3\xa3a]o\s+(\d+)',
+        r'^\s*(\d{1,3})\s*[\xe2\x80\x93\-]\s+[A-Z]',
+        r'^\s*(\d{1,3})\s*\.\s+[A-Z]',
     ]
     maior = 0
-    for padrao in padroes:
-        nums = re.findall(padrao, texto, re.MULTILINE)
-        if nums:
-            try:
+    for p in padroes:
+        try:
+            nums = re.findall(p, texto, re.MULTILINE)
+            if nums:
                 m = max(int(n) for n in nums if int(n) <= 1000)
-                if m > maior:
-                    maior = m
-            except Exception:
-                pass
-
-    # Fallback: conta ocorrências de "QUESTÃO" no texto
+                if m > maior: maior = m
+        except: pass
     if maior == 0:
-        ocorrencias = re.findall(r'QUEST[ÃA]O\s+\d+', texto, re.IGNORECASE)
+        ocorrencias = re.findall(r'QUEST[A-Z\xc3\x83]{1,2}O\s+\d+', texto, re.IGNORECASE)
         maior = len(ocorrencias) if ocorrencias else 50
-
-    print(f"Total de questões detectado: {maior}")
+    print(f"Total de questoes detectado: {maior}")
     return maior
 
 
 def _extrair_dados_texto(client, model_id: str, texto: str) -> dict:
-    """Extrai nome, banca e data da prova a partir do texto."""
     try:
-        msg = client.messages.create(
-            model=model_id,
-            max_tokens=300,
-            messages=[{
-                "role": "user",
-                "content": PROMPT_DADOS_PROVA.format(texto=texto)
-            }]
-        )
+        msg = client.messages.create(model=model_id, max_tokens=300,
+            messages=[{"role":"user","content":PROMPT_DADOS_PROVA.format(texto=texto)}])
         txt = msg.content[0].text.strip()
-        txt = re.sub(r"^```json\s*", "", txt)
-        txt = re.sub(r"\s*```$", "", txt).strip()
+        txt = re.sub(r"^```json\s*","",txt); txt = re.sub(r"\s*```$","",txt).strip()
         return json.loads(txt)
     except Exception as e:
         print(f"Erro dados prova: {e}")
-        return {"nome": "", "banca": "", "id_orgao": None, "data_da_prova": ""}
+        return {"nome":"","banca":"","id_orgao":None,"data_da_prova":""}
 
 
-def _processar_lote_texto(client, model_id: str, texto_prova: str,
-                           gabarito_texto: str, inicio: int, fim: int) -> list:
-    """Processa um lote enviando apenas texto — sem PDF."""
-    import time
-
-    # Limita o texto para não estourar tokens (~12k chars por lote)
-    prompt = PROMPT_TEXTO_LOTE.format(
-        inicio=inicio, fim=fim,
-        gabarito_texto=gabarito_texto,
-        texto_prova=texto_prova[:40000]
-    )
-
-    for tentativa in range(3):
-        try:
-            msg = client.messages.create(
-                model=model_id,
-                max_tokens=8000,
-                messages=[{"role": "user", "content": prompt}]
-            )
-            txt = msg.content[0].text.strip()
-            txt = re.sub(r"^```json\s*", "", txt)
-            txt = re.sub(r"\s*```$", "", txt).strip()
-            try:
-                return json.loads(txt).get("questoes", [])
-            except json.JSONDecodeError:
-                m = re.search(r'\{.*\}', txt, re.DOTALL)
-                if m:
-                    try:
-                        return json.loads(m.group()).get("questoes", [])
-                    except Exception:
-                        pass
-                return _recuperar_questoes_parciais(txt)
-        except Exception as e:
-            if 'rate_limit' in str(e).lower() and tentativa < 2:
-                print(f"Rate limit, aguardando 30s (tentativa {tentativa+1}/3)...")
-                time.sleep(30)
-                continue
-            print(f"Erro lote {inicio}-{fim}: {e}")
-            return []
-    return []
-
-
-def _processar_pdf_visao(client, model_id: str, conteudo_prova: bytes,
-                          conteudo_gabarito: Optional[bytes], progresso: dict) -> dict:
-    """
-    Fallback para PDFs que são imagens (sem texto extraível).
-    Usa visão do Claude com 1 única chamada — aceita truncamento.
-    """
-    def atualizar(etapa, **kw):
-        if progresso is not None:
-            progresso["etapa"] = etapa
-        print(etapa)
-
-    atualizar("PDF é imagem — processando com visão da IA...")
-
-    content = [{
-        "type": "document",
-        "source": {
-            "type": "base64",
-            "media_type": "application/pdf",
-            "data": base64.standard_b64encode(conteudo_prova).decode("utf-8")
-        },
-        "title": "Prova"
-    }]
-    if conteudo_gabarito:
-        content.append({
-            "type": "document",
-            "source": {
-                "type": "base64",
-                "media_type": "application/pdf",
-                "data": base64.standard_b64encode(conteudo_gabarito).decode("utf-8")
-            },
-            "title": "Gabarito"
-        })
-    content.append({"type": "text", "text": PROMPT_EXTRACAO_PDF})
-
-    try:
-        msg = client.messages.create(
-            model=model_id,
-            max_tokens=16000,
-            messages=[{"role": "user", "content": content}]
-        )
-        txt = msg.content[0].text.strip()
-        txt = re.sub(r"^```json\s*", "", txt)
-        txt = re.sub(r"\s*```$", "", txt).strip()
-        try:
-            return json.loads(txt)
-        except Exception:
-            m = re.search(r'\{.*\}', txt, re.DOTALL)
-            if m:
-                try:
-                    dados = json.loads(m.group())
-                    return dados
-                except Exception:
-                    pass
-            questoes = _recuperar_questoes_parciais(txt)
-            return {"dados_prova": {"nome": "", "banca": "", "id_orgao": None, "data_da_prova": ""}, "questoes": questoes}
-    except Exception as e:
-        raise ValueError(f"Erro ao processar PDF como imagem: {e}")
-
-
-def _dividir_texto_por_questoes(texto: str, total: int, lote: int) -> dict:
-    """
-    Divide o texto em blocos por questão para enviar apenas
-    o trecho relevante a cada lote.
-    Retorna dict: {numero_questao: trecho_texto}
-    """
+def _dividir_texto_por_questoes(texto: str, total: int) -> dict:
     blocos = {}
-
-    # Padrões de início de questão
-    padrao = re.compile(
-        r'(QUEST[ÃA]O\s+\d+|^\s*\d{1,3}\s*[–\-\.]\s)',
-        re.MULTILINE | re.IGNORECASE
-    )
-
-    # Encontra todas as posições de início de questão
+    padrao = re.compile(r'(QUEST[A-Z\xc3\x83]{1,2}O\s+\d+|^\s*\d{1,3}\s*[\xe2\x80\x93\-\.]\s)',
+                        re.MULTILINE | re.IGNORECASE)
     matches = list(padrao.finditer(texto))
-
     if not matches:
-        # Não achou padrão — retorna texto inteiro como bloco único
         blocos[1] = texto
         return blocos
-
     for i, m in enumerate(matches):
-        # Extrai número da questão
         nums = re.findall(r'\d+', m.group())
-        if not nums:
-            continue
+        if not nums: continue
         num = int(nums[0])
-        if num > total:
-            continue
-
-        inicio_pos = m.start()
+        if num > total or num < 1: continue
         fim_pos = matches[i+1].start() if i+1 < len(matches) else len(texto)
-        blocos[num] = texto[inicio_pos:fim_pos]
-
+        blocos[num] = texto[m.start():fim_pos]
     return blocos
-    """Recupera questões de um JSON truncado."""
+
+
+def _recuperar_questoes_parciais(txt: str) -> list:
     questoes = []
     arr_match = re.search(r'"questoes"\s*:\s*\[(.+)', txt, re.DOTALL)
     if arr_match:
@@ -471,9 +483,10 @@ def _dividir_texto_por_questoes(texto: str, total: int, lote: int) -> dict:
                 depth -= 1
                 if depth == 0 and start is not None:
                     try: questoes.append(json.loads(arr_txt[start:i+1]))
-                    except Exception: pass
+                    except: pass
                     start = None
     return questoes
+
 
 
 # ── SALVAR NO BANCO (fiel ao gerenciador PHP) ─────────────────────────────────

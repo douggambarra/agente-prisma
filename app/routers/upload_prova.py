@@ -35,11 +35,11 @@ class ConfirmarSalvamentoRequest(BaseModel):
     dados_prova: DadosProva
     questoes: List[QuestaoPreview]
 
-def executar_processamento(job_id: str, conteudo_prova: bytes, conteudo_gabarito: Optional[bytes], modelo: str):
+def executar_processamento(job_id: str, conteudo_prova: bytes, conteudo_gabarito: Optional[bytes], modelo: str, colunas: int):
     try:
         jobs[job_id]["status"] = "processando"
         jobs[job_id]["progresso"] = {"etapa": "Iniciando...", "lote_atual": 0, "total_lotes": 0, "questoes": 0}
-        resultado = processar_pdfs(conteudo_prova, conteudo_gabarito, modelo, jobs[job_id]["progresso"])
+        resultado = processar_pdfs(conteudo_prova, conteudo_gabarito, modelo, jobs[job_id]["progresso"], colunas)
         jobs[job_id]["status"] = "aguardando_confirmacao"
         jobs[job_id]["resultado"] = resultado
     except Exception as e:
@@ -80,7 +80,8 @@ async def processar_upload(
     background_tasks: BackgroundTasks,
     prova: UploadFile = File(...),
     gabarito: Optional[UploadFile] = File(None),
-    modelo: str = "sonnet"
+    modelo: str = "sonnet",
+    colunas: int = 1
 ):
     if not prova.filename.lower().endswith(".pdf"):
         raise HTTPException(status_code=400, detail="Arquivo de prova deve ser PDF.")
@@ -92,9 +93,11 @@ async def processar_upload(
         conteudo_gabarito = await gabarito.read()
     if modelo not in ("haiku", "sonnet", "opus"):
         modelo = "sonnet"
+    if colunas not in (1, 2, 3):
+        colunas = 1
     job_id = str(uuid.uuid4())[:8]
     jobs[job_id] = {"status": "aguardando", "resultado": None, "erro": None, "progresso": None}
-    background_tasks.add_task(executar_processamento, job_id, conteudo_prova, conteudo_gabarito, modelo)
+    background_tasks.add_task(executar_processamento, job_id, conteudo_prova, conteudo_gabarito, modelo, colunas)
     return {"job_id": job_id, "status": "iniciado"}
 
 @router.get("/job/{job_id}")

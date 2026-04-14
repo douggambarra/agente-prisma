@@ -535,8 +535,24 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'DM San
                 </div>
                 <input type="file" id="pdf-file1" accept=".pdf" style="display:none" onchange="pdfSetFile1(this)">
 
-                <!-- SELETOR DE MODELO -->
-                <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:12px" id="pdf-modelo-wrap">
+                <!-- SELETOR DE COLUNAS -->
+                <div style="margin-bottom:12px">
+                  <label style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:.05em;display:block;margin-bottom:6px">Layout da prova</label>
+                  <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px" id="pdf-colunas-wrap">
+                    <div class="pdf-modelo-btn active" data-colunas="1" onclick="pdfSetColunas(this)">
+                      <div style="font-size:13px;font-weight:700;color:var(--text)">▌ 1 coluna</div>
+                      <div style="font-size:10px;color:var(--text3);margin-top:2px">Texto linear</div>
+                    </div>
+                    <div class="pdf-modelo-btn" data-colunas="2" onclick="pdfSetColunas(this)">
+                      <div style="font-size:13px;font-weight:700;color:var(--text)">▌▌ 2 colunas</div>
+                      <div style="font-size:10px;color:var(--text3);margin-top:2px">Lado a lado</div>
+                    </div>
+                    <div class="pdf-modelo-btn" data-colunas="3" onclick="pdfSetColunas(this)">
+                      <div style="font-size:13px;font-weight:700;color:var(--text)">▌▌▌ 3 colunas</div>
+                      <div style="font-size:10px;color:var(--text3);margin-top:2px">Três colunas</div>
+                    </div>
+                  </div>
+                </div>
                   <div class="pdf-modelo-btn active" data-modelo="haiku" onclick="pdfSetModelo(this)">
                     <div style="font-size:13px;font-weight:700;color:var(--teal)">⚡ Rápido</div>
                     <div style="font-size:10px;color:var(--text3);margin-top:2px">Haiku · ~$0.03/prova</div>
@@ -1544,6 +1560,14 @@ function filtrarQuestoes(query) {
 
 function sleep(ms) { return new Promise(r => setTimeout(r, ms)) }
 
+let pdfColunas = 1
+
+function pdfSetColunas(el) {
+  document.querySelectorAll('#pdf-colunas-wrap .pdf-modelo-btn').forEach(b => b.classList.remove('active'))
+  el.classList.add('active')
+  pdfColunas = parseInt(el.dataset.colunas)
+}
+
 // ── MODELO ────────────────────────────────────────────────────────────────────
 let pdfModelo = 'haiku'
 
@@ -1690,6 +1714,7 @@ async function pdfProcessar() {
     fd.append('prova', pdfFile1)
     if (pdfFile2) fd.append('gabarito', pdfFile2)
     fd.append('modelo', pdfModelo)
+    fd.append('colunas', pdfColunas)
 
     const res = await fetch(`${API}/upload-prova/processar`, { method: 'POST', body: fd })
     if (!res.ok) throw new Error(`HTTP ${res.status}`)
