@@ -147,11 +147,19 @@ Regras:
 - Retorne JSON puro sem nenhum texto antes ou depois"""
 
 
-def processar_pdfs(conteudo_prova: bytes, conteudo_gabarito: Optional[bytes] = None, modelo: str = "sonnet") -> dict:
+def processar_pdfs(conteudo_prova: bytes, conteudo_gabarito: Optional[bytes] = None, modelo: str = "sonnet", progresso: dict = None) -> dict:
     """
     Processa PDFs em lotes de 50 questões — suporta provas de 650+ questões.
     modelo: "haiku" | "sonnet" | "opus"
     """
+    def atualizar(etapa, lote_atual=0, total_lotes=0, questoes=0):
+        if progresso is not None:
+            progresso["etapa"] = etapa
+            progresso["lote_atual"] = lote_atual
+            progresso["total_lotes"] = total_lotes
+            progresso["questoes"] = questoes
+        print(etapa)
+
     modelos = {
         "haiku":  "claude-haiku-4-5-20251001",
         "sonnet": "claude-sonnet-4-6",
@@ -162,14 +170,17 @@ def processar_pdfs(conteudo_prova: bytes, conteudo_gabarito: Optional[bytes] = N
     client = get_claude()
 
     # Passo 1: descobre total de questões
+    atualizar("Contando questões da prova...")
     total = _descobrir_total_questoes(client, model_id, conteudo_prova)
     print(f"Total detectado: {total} questões")
 
     # Passo 2: extrai dados da prova
+    atualizar("Extraindo dados da prova (banca, data)...")
     dados_prova = _extrair_dados_prova(client, model_id, conteudo_prova)
 
     # Passo 3: processa em lotes de 50
     LOTE = 50
+    total_lotes = (total + LOTE - 1) // LOTE
     todas_questoes = []
     gabarito_instrucao = (
         "Use o gabarito separado para identificar as respostas corretas."
@@ -177,18 +188,28 @@ def processar_pdfs(conteudo_prova: bytes, conteudo_gabarito: Optional[bytes] = N
         "O gabarito está junto na prova."
     )
 
-    for inicio in range(1, total + 1, LOTE):
+    for idx, inicio in enumerate(range(1, total + 1, LOTE), start=1):
         fim = min(inicio + LOTE - 1, total)
-        print(f"Lote {inicio}-{fim}...")
+        atualizar(
+            f"Extraindo questões {inicio} a {fim}...",
+            lote_atual=idx,
+            total_lotes=total_lotes,
+            questoes=len(todas_questoes)
+        )
         questoes = _processar_lote(
             client, model_id,
             conteudo_prova, conteudo_gabarito,
             inicio, fim, gabarito_instrucao
         )
         todas_questoes.extend(questoes)
-        print(f"  → {len(questoes)} questões extraídas")
+        atualizar(
+            f"Lote {idx}/{total_lotes} concluído — {len(todas_questoes)} questões extraídas",
+            lote_atual=idx,
+            total_lotes=total_lotes,
+            questoes=len(todas_questoes)
+        )
 
-    print(f"Total extraído: {len(todas_questoes)} questões")
+    atualizar(f"Pronto! {len(todas_questoes)} questões extraídas.", total_lotes, total_lotes, len(todas_questoes))
     return {"dados_prova": dados_prova, "questoes": todas_questoes}
 
 

@@ -578,8 +578,11 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'DM San
               <div id="pdf-view-loading" style="display:none">
                 <div class="upload-loading">
                   <div class="upload-spinner"></div>
-                  <div class="upload-loading-text" id="pdf-loading-text">Lendo os PDFs...</div>
-                  <div class="upload-loading-step" id="pdf-loading-step">A IA está analisando o conteúdo</div>
+                  <div class="upload-loading-text" id="pdf-loading-text">Iniciando...</div>
+                  <div class="upload-loading-step" id="pdf-loading-step">Aguardando processamento</div>
+                  <div style="margin-top:16px;background:var(--bg3);border-radius:4px;height:6px;overflow:hidden">
+                    <div id="pdf-prog-bar" style="height:100%;background:var(--purple2);border-radius:4px;width:0%;transition:width 0.5s"></div>
+                  </div>
                 </div>
               </div>
 
@@ -1707,10 +1710,25 @@ async function pdfPolling(jobId) {
   let i = 0
   while (true) {
     i++
-    await sleep(4000)
+    await sleep(3000)
     try {
       const res = await fetch(`${API}/upload-prova/job/${jobId}`)
       const data = await res.json()
+
+      // Atualiza loading com progresso real
+      if (data.progresso) {
+        const p = data.progresso
+        document.getElementById('pdf-loading-text').textContent = p.etapa || 'Processando...'
+        if (p.total_lotes > 0) {
+          const pct = Math.round((p.lote_atual / p.total_lotes) * 100)
+          document.getElementById('pdf-loading-step').textContent =
+            `Lote ${p.lote_atual} de ${p.total_lotes} — ${p.questoes} questões extraídas até agora`
+          // Atualiza barra de progresso
+          const bar = document.getElementById('pdf-prog-bar')
+          if (bar) bar.style.width = pct + '%'
+        }
+      }
+
       if (data.status === 'aguardando_confirmacao') {
         clearInterval(pdfLoadTimer)
         pdfDadosExtraidos = data.resultado
@@ -1723,7 +1741,7 @@ async function pdfPolling(jobId) {
         pdfMostrarView('pdf-view-upload')
         return
       }
-    } catch(e) { /* continua tentando */ }
+    } catch(e) { /* continua */ }
   }
 }
 

@@ -38,7 +38,8 @@ class ConfirmarSalvamentoRequest(BaseModel):
 def executar_processamento(job_id: str, conteudo_prova: bytes, conteudo_gabarito: Optional[bytes], modelo: str):
     try:
         jobs[job_id]["status"] = "processando"
-        resultado = processar_pdfs(conteudo_prova, conteudo_gabarito, modelo)
+        jobs[job_id]["progresso"] = {"etapa": "Iniciando...", "lote_atual": 0, "total_lotes": 0, "questoes": 0}
+        resultado = processar_pdfs(conteudo_prova, conteudo_gabarito, modelo, jobs[job_id]["progresso"])
         jobs[job_id]["status"] = "aguardando_confirmacao"
         jobs[job_id]["resultado"] = resultado
     except Exception as e:
@@ -92,7 +93,7 @@ async def processar_upload(
     if modelo not in ("haiku", "sonnet", "opus"):
         modelo = "sonnet"
     job_id = str(uuid.uuid4())[:8]
-    jobs[job_id] = {"status": "aguardando", "resultado": None, "erro": None}
+    jobs[job_id] = {"status": "aguardando", "resultado": None, "erro": None, "progresso": None}
     background_tasks.add_task(executar_processamento, job_id, conteudo_prova, conteudo_gabarito, modelo)
     return {"job_id": job_id, "status": "iniciado"}
 
