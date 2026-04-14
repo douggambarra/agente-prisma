@@ -274,12 +274,9 @@ def _processar_por_paginas(client, model_id, conteudo_prova, conteudo_gabarito,
     print(f"Total de paginas: {total_paginas} | Grupos de {pags_por_grupo}: {total_grupos}")
 
     for idx, grupo in enumerate(grupos, start=1):
-        q_inicio = round((idx - 1) / total_grupos * total) + 1
-        q_fim = round(idx / total_grupos * total)
-
         pag_ini = (idx-1) * pags_por_grupo + 1
         pag_fim = min(idx * pags_por_grupo, total_paginas)
-        atualizar(f"Paginas {pag_ini}-{pag_fim} (questoes ~{q_inicio}-{q_fim})...",
+        atualizar(f"Paginas {pag_ini}-{pag_fim}...",
                   lote_atual=idx, total_lotes=total_grupos, questoes=len(todas_questoes))
 
         # Monta PDF do grupo
@@ -296,7 +293,7 @@ def _processar_por_paginas(client, model_id, conteudo_prova, conteudo_gabarito,
             continue
 
         questoes = _chamar_claude_pdf(client, model_id, conteudo_grupo,
-                                       conteudo_gabarito, gabarito_texto, q_inicio, q_fim)
+                                       conteudo_gabarito, gabarito_texto)
         todas_questoes.extend(questoes)
         atualizar(f"Grupo {idx}/{total_grupos} concluido — {len(todas_questoes)} questoes",
                   lote_atual=idx, total_lotes=total_grupos, questoes=len(todas_questoes))
@@ -343,19 +340,20 @@ Regras: extraia so {inicio}-{fim}, correta:true apenas no gabarito, ANULADAS: ga
 
 
 def _chamar_claude_pdf(client, model_id, conteudo_grupo, conteudo_gabarito,
-                        gabarito_texto, inicio, fim):
-    """Chama Claude com PDF de paginas."""
+                        gabarito_texto):
+    """Chama Claude com PDF de paginas — extrai TODAS as questoes presentes."""
     import time
-    prompt = f"""Extraia APENAS as questoes de numero {inicio} ate {fim} deste PDF.
+    prompt = f"""Extraia TODAS as questoes presentes nestas paginas do PDF.
+IMPORTANTE: Este PDF pode ter layout em DUAS COLUNAS. Leia a coluna esquerda inteira de cima a baixo, depois a coluna direita inteira de cima a baixo. Nao leia horizontalmente.
 {gabarito_texto}
 
 Retorne APENAS JSON sem markdown:
-{{"questoes":[{{"numero":{inicio},"enunciado":"","pergunta":"texto","gabarito":"A","anulada":false,"disciplina":"Disciplina","alternativas":[{{"letra":"A","texto":"texto","correta":true}},{{"letra":"B","texto":"texto","correta":false}},{{"letra":"C","texto":"texto","correta":false}},{{"letra":"D","texto":"texto","correta":false}},{{"letra":"E","texto":"texto","correta":false}}]}}]}}
+{{"questoes":[{{"numero":1,"enunciado":"","pergunta":"texto","gabarito":"A","anulada":false,"disciplina":"Disciplina","alternativas":[{{"letra":"A","texto":"texto","correta":true}},{{"letra":"B","texto":"texto","correta":false}},{{"letra":"C","texto":"texto","correta":false}},{{"letra":"D","texto":"texto","correta":false}},{{"letra":"E","texto":"texto","correta":false}}]}}]}}
 
-Regras: extraia so {inicio}-{fim}, correta:true apenas no gabarito, ANULADAS: gabarito:ANULADA anulada:true, preserva simbolos especiais, Certo/Errado = 2 alternativas, JSON puro."""
+Regras: extraia TODAS as questoes desta pagina (pelo numero impresso), correta:true apenas no gabarito, ANULADAS: gabarito:ANULADA anulada:true, preserva simbolos especiais, Certo/Errado = 2 alternativas, JSON puro."""
 
     content = [{"type":"document","source":{"type":"base64","media_type":"application/pdf",
-                "data":base64.standard_b64encode(conteudo_grupo).decode()},"title":f"Paginas {inicio}-{fim}"}]
+                "data":base64.standard_b64encode(conteudo_grupo).decode()},"title":"Paginas da prova"}]
     if conteudo_gabarito:
         content.append({"type":"document","source":{"type":"base64","media_type":"application/pdf",
                         "data":base64.standard_b64encode(conteudo_gabarito).decode()},"title":"Gabarito"})
