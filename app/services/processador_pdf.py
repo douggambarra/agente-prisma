@@ -201,12 +201,14 @@ def processar_pdfs(conteudo_prova: bytes, conteudo_gabarito: Optional[bytes] = N
     texto_prova = _extrair_texto_pdf(conteudo_prova)
     texto_gabarito = _extrair_texto_pdf(conteudo_gabarito) if conteudo_gabarito else ""
 
+    print(f"Texto extraído: {len(texto_prova)} caracteres")
+    print(f"Primeiros 500 chars: {texto_prova[:500]}")
+    print(f"Últimos 500 chars: {texto_prova[-500:]}")
+
     if not texto_prova:
         # Fallback: PDF é imagem, usa visão do Claude (só 1 chamada)
         atualizar("PDF é imagem — usando visão da IA (1 chamada)...")
         return _processar_pdf_visao(client, model_id, conteudo_prova, conteudo_gabarito, progresso)
-
-    print(f"Texto extraído: {len(texto_prova)} caracteres")
 
     # Passo 2: extrai dados da prova a partir do texto
     atualizar("Identificando dados da prova...")
@@ -224,6 +226,11 @@ def processar_pdfs(conteudo_prova: bytes, conteudo_gabarito: Optional[bytes] = N
 
     gabarito_texto = f"\nGABARITO:\n{texto_gabarito[:5000]}" if texto_gabarito else ""
 
+    # Passo 3.5: divide texto em blocos por questão
+    atualizar("Dividindo texto por questões...")
+    blocos = _dividir_texto_por_questoes(texto_prova, total, LOTE)
+    print(f"Blocos encontrados: {len(blocos)}")
+
     for idx, inicio in enumerate(range(1, total + 1, LOTE), start=1):
         fim = min(inicio + LOTE - 1, total)
         atualizar(
@@ -232,9 +239,20 @@ def processar_pdfs(conteudo_prova: bytes, conteudo_gabarito: Optional[bytes] = N
             questoes=len(todas_questoes)
         )
 
+        # Monta texto apenas com as questões deste lote
+        if blocos and len(blocos) > 1:
+            texto_lote = ""
+            for n in range(inicio, fim + 1):
+                if n in blocos:
+                    texto_lote += blocos[n] + "\n"
+            if not texto_lote:
+                texto_lote = texto_prova  # fallback
+        else:
+            texto_lote = texto_prova
+
         questoes = _processar_lote_texto(
             client, model_id,
-            texto_prova, gabarito_texto,
+            texto_lote, gabarito_texto,
             inicio, fim
         )
         todas_questoes.extend(questoes)
@@ -403,7 +421,42 @@ def _processar_pdf_visao(client, model_id: str, conteudo_prova: bytes,
         raise ValueError(f"Erro ao processar PDF como imagem: {e}")
 
 
-def _recuperar_questoes_parciais(txt: str) -> list:
+def _dividir_texto_por_questoes(texto: str, total: int, lote: int) -> dict:
+    """
+    Divide o texto em blocos por questão para enviar apenas
+    o trecho relevante a cada lote.
+    Retorna dict: {numero_questao: trecho_texto}
+    """
+    blocos = {}
+
+    # Padrões de início de questão
+    padrao = re.compile(
+        r'(QUEST[ÃA]O\s+\d+|^\s*\d{1,3}\s*[–\-\.]\s)',
+        re.MULTILINE | re.IGNORECASE
+    )
+
+    # Encontra todas as posições de início de questão
+    matches = list(padrao.finditer(texto))
+
+    if not matches:
+        # Não achou padrão — retorna texto inteiro como bloco único
+        blocos[1] = texto
+        return blocos
+
+    for i, m in enumerate(matches):
+        # Extrai número da questão
+        nums = re.findall(r'\d+', m.group())
+        if not nums:
+            continue
+        num = int(nums[0])
+        if num > total:
+            continue
+
+        inicio_pos = m.start()
+        fim_pos = matches[i+1].start() if i+1 < len(matches) else len(texto)
+        blocos[num] = texto[inicio_pos:fim_pos]
+
+    return blocos
     """Recupera questões de um JSON truncado."""
     questoes = []
     arr_match = re.search(r'"questoes"\s*:\s*\[(.+)', txt, re.DOTALL)
