@@ -253,25 +253,33 @@ def processar_pdfs(conteudo_prova: bytes, conteudo_gabarito: Optional[bytes] = N
 
 
 def _contar_questoes_texto(texto: str) -> int:
-    """Conta questões pelo padrão 'QUESTÃO N' ou 'Q. N' no texto."""
-    # Tenta padrões comuns de numeração
+    """Conta questões pelo maior número de questão encontrado no texto."""
+    # Padrões específicos de questão — evita pegar anos, valores, etc.
     padroes = [
-        r'QUEST[ÃA]O\s+(\d+)',
-        r'Quest[ãa]o\s+(\d+)',
-        r'^\s*(\d+)\s*[–\-]\s',
-        r'^\s*(\d+)\s*\.',
+        r'QUEST[ÃA]O\s+(\d+)',           # QUESTÃO 70
+        r'Quest[ãa]o\s+(\d+)',            # Questão 70
+        r'^\s*(\d{1,3})\s*[–\-]\s+[A-Z]', # 70 – Assinale
+        r'^\s*(\d{1,3})\s*\.\s+[A-Z]',    # 70. Assinale
+        r'^\s*(\d{1,3})\s*\)\s*[A-Z]',    # 70) Assinale
     ]
     maior = 0
     for padrao in padroes:
         nums = re.findall(padrao, texto, re.MULTILINE)
         if nums:
             try:
-                m = max(int(n) for n in nums)
+                m = max(int(n) for n in nums if int(n) <= 1000)
                 if m > maior:
                     maior = m
             except Exception:
                 pass
-    return maior if maior > 0 else 50
+
+    # Fallback: conta ocorrências de "QUESTÃO" no texto
+    if maior == 0:
+        ocorrencias = re.findall(r'QUEST[ÃA]O\s+\d+', texto, re.IGNORECASE)
+        maior = len(ocorrencias) if ocorrencias else 50
+
+    print(f"Total de questões detectado: {maior}")
+    return maior
 
 
 def _extrair_dados_texto(client, model_id: str, texto: str) -> dict:
