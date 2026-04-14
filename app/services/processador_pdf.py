@@ -208,6 +208,10 @@ def processar_pdfs(conteudo_prova: bytes, conteudo_gabarito: Optional[bytes] = N
             total_lotes=total_lotes,
             questoes=len(todas_questoes)
         )
+        # Pausa entre lotes para respeitar rate limit (30k tokens/min)
+        if idx < total_lotes:
+            import time
+            time.sleep(15)
 
     atualizar(f"Pronto! {len(todas_questoes)} questões extraídas.", total_lotes, total_lotes, len(todas_questoes))
     return {"dados_prova": dados_prova, "questoes": todas_questoes}
