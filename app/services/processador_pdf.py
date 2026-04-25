@@ -156,6 +156,27 @@ TEXTO:
 {texto}"""
 
 
+def analisar_pdf(conteudo_prova: bytes, conteudo_gabarito: Optional[bytes] = None,
+                 modelo: str = "sonnet") -> dict:
+    """Fase 1 rapida: conta questoes e extrai dados da prova sem extrair tudo."""
+    modelos = {
+        "haiku":  "claude-haiku-4-5-20251001",
+        "sonnet": "claude-sonnet-4-6",
+        "opus":   "claude-opus-4-6",
+    }
+    model_id = modelos.get(modelo, "claude-sonnet-4-6")
+    client = get_claude()
+
+    texto_prova = _extrair_texto_pdf(conteudo_prova)
+    total = _contar_questoes_texto(texto_prova)
+    dados_prova = _extrair_dados_texto(client, model_id, texto_prova[:3000])
+
+    return {
+        "total_questoes": total,
+        "dados_prova": dados_prova,
+    }
+
+
 def processar_pdfs(conteudo_prova: bytes, conteudo_gabarito: Optional[bytes] = None,
                    modelo: str = "sonnet", progresso: dict = None,
                    colunas: int = 1) -> dict:
@@ -221,7 +242,7 @@ def _processar_por_texto(client, model_id, texto_prova, gabarito_texto,
                           dados_prova, total, atualizar):
     """Estrategia 1 coluna: divide texto em blocos e processa por texto."""
     import time
-    LOTE = 50
+    LOTE = 15  # 50 questoes por lote truncava o JSON (15000 tokens > max_tokens=8192)
     total_lotes = max(1, (total + LOTE - 1) // LOTE)
     todas_questoes = []
 
@@ -253,6 +274,16 @@ def _processar_por_texto(client, model_id, texto_prova, gabarito_texto,
 
         if idx < total_lotes:
             time.sleep(5)
+
+    # Deduplicar por numero de questao (mantém a primeira ocorrencia)
+    visto = set()
+    unicas = []
+    for q in todas_questoes:
+        n = q.get("numero")
+        if n not in visto:
+            visto.add(n)
+            unicas.append(q)
+    todas_questoes = sorted(unicas, key=lambda q: q.get("numero", 0))
 
     atualizar(f"Pronto! {len(todas_questoes)} questoes.", total_lotes, total_lotes, len(todas_questoes))
     return {"dados_prova": dados_prova, "questoes": todas_questoes}
@@ -303,6 +334,16 @@ def _processar_por_paginas(client, model_id, conteudo_prova, conteudo_gabarito,
         if idx < total_grupos:
             time.sleep(5)
 
+    # Deduplicar por numero de questao (questoes em borda de pagina podem repetir)
+    visto = set()
+    unicas = []
+    for q in todas_questoes:
+        n = q.get("numero")
+        if n not in visto:
+            visto.add(n)
+            unicas.append(q)
+    todas_questoes = sorted(unicas, key=lambda q: q.get("numero", 0))
+
     atualizar(f"Pronto! {len(todas_questoes)} questoes.", total_grupos, total_grupos, len(todas_questoes))
     return {"dados_prova": dados_prova, "questoes": todas_questoes}
 
@@ -323,7 +364,7 @@ Regras: extraia so {inicio}-{fim}, correta:true apenas no gabarito, ANULADAS: ga
 
     for t in range(3):
         try:
-            msg = client.messages.create(model=model_id, max_tokens=8000,
+            msg = client.messages.create(model=model_id, max_tokens=8192,
                 messages=[{"role":"user","content":prompt}])
             txt = msg.content[0].text.strip()
             txt = re.sub(r"^```json\s*","",txt); txt = re.sub(r"\s*```$","",txt).strip()
@@ -363,7 +404,7 @@ Regras: extraia TODAS as questoes desta pagina (pelo numero impresso), correta:t
 
     for t in range(3):
         try:
-            msg = client.messages.create(model=model_id, max_tokens=8000,
+            msg = client.messages.create(model=model_id, max_tokens=8192,
                 messages=[{"role":"user","content":content}])
             txt = msg.content[0].text.strip()
             txt = re.sub(r"^```json\s*","",txt); txt = re.sub(r"\s*```$","",txt).strip()
@@ -377,7 +418,7 @@ Regras: extraia TODAS as questoes desta pagina (pelo numero impresso), correta:t
         except Exception as e:
             if 'rate_limit' in str(e).lower() and t < 2:
                 print(f"Rate limit, aguardando 30s..."); time.sleep(30); continue
-            print(f"Erro grupo {inicio}-{fim}: {e}"); return []
+            print(f"Erro PDF grupo: {e}"); return []
     return []
 
 
@@ -419,9 +460,9 @@ def _get_paginas_pdf(conteudo: bytes):
 
 def _contar_questoes_texto(texto: str) -> int:
     padroes = [
-        r'QUEST[\xc3\x83A]O\s+(\d+)',
-        r'Quest[\xc3\xa3a]o\s+(\d+)',
-        r'^\s*(\d{1,3})\s*[\xe2\x80\x93\-]\s+[A-Z]',
+        r'QUEST[ÃA]O\s+(\d+)',
+        r'Quest[ãa]o\s+(\d+)',
+        r'^\s*(\d{1,3})\s*[–\-]\s+[A-Z]',
         r'^\s*(\d{1,3})\s*\.\s+[A-Z]',
     ]
     maior = 0
@@ -433,7 +474,7 @@ def _contar_questoes_texto(texto: str) -> int:
                 if m > maior: maior = m
         except: pass
     if maior == 0:
-        ocorrencias = re.findall(r'QUEST[A-Z\xc3\x83]{1,2}O\s+\d+', texto, re.IGNORECASE)
+        ocorrencias = re.findall(r'QUEST[ÃA]O\s+\d+', texto, re.IGNORECASE)
         maior = len(ocorrencias) if ocorrencias else 50
     print(f"Total de questoes detectado: {maior}")
     return maior
@@ -453,7 +494,7 @@ def _extrair_dados_texto(client, model_id: str, texto: str) -> dict:
 
 def _dividir_texto_por_questoes(texto: str, total: int) -> dict:
     blocos = {}
-    padrao = re.compile(r'(QUEST[A-Z\xc3\x83]{1,2}O\s+\d+|^\s*\d{1,3}\s*[\xe2\x80\x93\-\.]\s)',
+    padrao = re.compile(r'(QUEST[ÃA]O\s+\d+|^\s*\d{1,3}\s*[–\-\.]\s)',
                         re.MULTILINE | re.IGNORECASE)
     matches = list(padrao.finditer(texto))
     if not matches:

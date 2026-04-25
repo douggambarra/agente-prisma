@@ -3,7 +3,7 @@ from pydantic import BaseModel
 from typing import Optional, List
 import uuid
 from app.database import get_connection
-from app.services.processador_pdf import processar_pdfs, salvar_prova_completa
+from app.services.processador_pdf import processar_pdfs, salvar_prova_completa, analisar_pdf
 
 router = APIRouter()
 jobs = {}
@@ -35,8 +35,27 @@ class ConfirmarSalvamentoRequest(BaseModel):
     dados_prova: DadosProva
     questoes: List[QuestaoPreview]
 
-def executar_processamento(job_id: str, conteudo_prova: bytes, conteudo_gabarito: Optional[bytes], modelo: str, colunas: int):
+def executar_analise(job_id: str, conteudo_prova: bytes, conteudo_gabarito: Optional[bytes], modelo: str):
+    """Fase 1: análise rápida — conta questões e extrai dados da prova."""
     try:
+        jobs[job_id]["status"] = "analisando"
+        preview = analisar_pdf(conteudo_prova, conteudo_gabarito, modelo)
+        jobs[job_id]["status"] = "aguardando_inicio"
+        jobs[job_id]["preview"] = preview
+    except Exception as e:
+        jobs[job_id]["status"] = "erro"
+        jobs[job_id]["erro"] = str(e)
+
+
+def executar_processamento(job_id: str):
+    """Fase 2: extração completa usando bytes já armazenados no job."""
+    try:
+        job = jobs[job_id]
+        conteudo_prova   = job["_bytes_prova"]
+        conteudo_gabarito = job["_bytes_gabarito"]
+        modelo  = job["_modelo"]
+        colunas = job["_colunas"]
+
         jobs[job_id]["status"] = "processando"
         jobs[job_id]["progresso"] = {"etapa": "Iniciando...", "lote_atual": 0, "total_lotes": 0, "questoes": 0}
         resultado = processar_pdfs(conteudo_prova, conteudo_gabarito, modelo, jobs[job_id]["progresso"], colunas)
@@ -96,15 +115,35 @@ async def processar_upload(
     if colunas not in (1, 2, 3):
         colunas = 1
     job_id = str(uuid.uuid4())[:8]
-    jobs[job_id] = {"status": "aguardando", "resultado": None, "erro": None, "progresso": None}
-    background_tasks.add_task(executar_processamento, job_id, conteudo_prova, conteudo_gabarito, modelo, colunas)
+    jobs[job_id] = {
+        "status": "aguardando", "resultado": None, "erro": None,
+        "progresso": None, "preview": None,
+        "_bytes_prova": conteudo_prova, "_bytes_gabarito": conteudo_gabarito,
+        "_modelo": modelo, "_colunas": colunas,
+    }
+    background_tasks.add_task(executar_analise, job_id, conteudo_prova, conteudo_gabarito, modelo)
     return {"job_id": job_id, "status": "iniciado"}
 
 @router.get("/job/{job_id}")
 def status_job(job_id: str):
     if job_id not in jobs:
         raise HTTPException(status_code=404, detail="Job não encontrado.")
-    return jobs[job_id]
+    # Não expor bytes dos PDFs na resposta
+    job = {k: v for k, v in jobs[job_id].items() if not k.startswith("_")}
+    return job
+
+
+@router.post("/iniciar/{job_id}")
+def iniciar_extracao(job_id: str, background_tasks: BackgroundTasks):
+    """Fase 2: usuário confirmou o número de questões, inicia extração completa."""
+    if job_id not in jobs:
+        raise HTTPException(status_code=404, detail="Job não encontrado.")
+    if jobs[job_id]["status"] != "aguardando_inicio":
+        raise HTTPException(status_code=400, detail=f"Job em status inválido: {jobs[job_id]['status']}")
+    jobs[job_id]["status"] = "processando"
+    jobs[job_id]["progresso"] = {"etapa": "Iniciando extração...", "lote_atual": 0, "total_lotes": 0, "questoes": 0}
+    background_tasks.add_task(executar_processamento, job_id)
+    return {"status": "processando"}
 
 @router.post("/confirmar")
 def confirmar_salvamento(data: ConfirmarSalvamentoRequest):

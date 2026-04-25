@@ -350,6 +350,14 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'DM San
 .upload-spinner{width:36px;height:36px;border:3px solid var(--border2);border-top-color:var(--purple);border-radius:50%;animation:spin .8s linear infinite;margin:0 auto 12px}
 .upload-loading-text{font-size:13px;color:var(--text2)}
 .upload-loading-step{font-size:11px;color:var(--text3);margin-top:6px}
+.upload-confirmacao{text-align:center;padding:32px 20px;animation:fadeUp .3s ease}
+.conf-icon{font-size:40px;margin-bottom:12px}
+.conf-total{font-family:'Syne',sans-serif;font-size:56px;font-weight:700;color:var(--purple);letter-spacing:-0.03em;line-height:1}
+.conf-label{font-size:13px;color:var(--text2);margin-top:4px;margin-bottom:12px}
+.conf-prova{font-size:12px;color:var(--text3);background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius);padding:8px 14px;margin-bottom:12px;min-height:20px}
+.conf-info{font-size:11px;color:var(--text3);margin-bottom:20px}
+.conf-actions{display:flex;gap:10px;justify-content:center}
+.conf-actions .btn{width:auto;padding:9px 20px}
 .upload-success{text-align:center;padding:28px 16px;animation:fadeUp .3s ease}
 .upload-success-icon{font-size:36px;margin-bottom:10px}
 .upload-success-title{font-size:14px;font-weight:700;color:var(--teal);margin-bottom:5px}
@@ -602,6 +610,21 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'DM San
                 </div>
               </div>
 
+              <!-- VIEW: CONFIRMAÇÃO -->
+              <div id="pdf-view-confirmacao" style="display:none">
+                <div class="upload-confirmacao">
+                  <div class="conf-icon">🔍</div>
+                  <div class="conf-total" id="conf-total">0</div>
+                  <div class="conf-label">questões encontradas</div>
+                  <div class="conf-prova" id="conf-prova"></div>
+                  <div class="conf-info">Confira se o número está correto antes de iniciar a extração completa.</div>
+                  <div class="conf-actions">
+                    <button class="btn btn-secondary" onclick="pdfVoltar()">← Reenviar</button>
+                    <button class="btn btn-primary" onclick="pdfIniciarExtracao()">Extrair questões →</button>
+                  </div>
+                </div>
+              </div>
+
               <!-- VIEW: PREVIEW -->
               <div id="pdf-view-preview" style="display:none">
                 <div class="preview-section">
@@ -766,7 +789,9 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'DM San
 </div>
 
 <script>
-const API = 'https://web-production-cc8e1.up.railway.app'
+const API = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
+  ? 'http://localhost:8000'
+  : 'https://web-production-cc8e1.up.railway.app'
 let usuario = null
 let provas = []
 let running = false
@@ -1694,7 +1719,7 @@ const pdfLoadSteps = [
 let pdfLoadIdx = 0, pdfLoadTimer = null
 
 function pdfMostrarView(id) {
-  ;['pdf-view-upload','pdf-view-loading','pdf-view-preview','pdf-view-success'].forEach(v => {
+  ;['pdf-view-upload','pdf-view-loading','pdf-view-confirmacao','pdf-view-preview','pdf-view-success'].forEach(v => {
     document.getElementById(v).style.display = v === id ? '' : 'none'
   })
 }
@@ -1754,6 +1779,16 @@ async function pdfPolling(jobId) {
         }
       }
 
+      if (data.status === 'aguardando_inicio') {
+        clearInterval(pdfLoadTimer)
+        const p = data.preview || {}
+        document.getElementById('conf-total').textContent = p.total_questoes ?? '?'
+        const prova = p.dados_prova || {}
+        const partes = [prova.nome, prova.banca, prova.data_da_prova].filter(Boolean)
+        document.getElementById('conf-prova').textContent = partes.join(' · ') || 'Dados não identificados'
+        pdfMostrarView('pdf-view-confirmacao')
+        return
+      }
       if (data.status === 'aguardando_confirmacao') {
         clearInterval(pdfLoadTimer)
         pdfDadosExtraidos = data.resultado
@@ -1767,6 +1802,25 @@ async function pdfPolling(jobId) {
         return
       }
     } catch(e) { /* continua */ }
+  }
+}
+
+async function pdfIniciarExtracao() {
+  pdfMostrarView('pdf-view-loading')
+  pdfLoadIdx = 0
+  pdfAtualizaStep()
+  pdfLoadTimer = setInterval(() => {
+    pdfLoadIdx = Math.min(pdfLoadIdx + 1, pdfLoadSteps.length - 2)
+    pdfAtualizaStep()
+  }, 1800)
+  try {
+    const res = await fetch(`${API}/upload-prova/iniciar/${pdfJobId}`, { method: 'POST' })
+    if (!res.ok) throw new Error(`HTTP ${res.status}`)
+    await pdfPolling(pdfJobId)
+  } catch(e) {
+    clearInterval(pdfLoadTimer)
+    addLog('err', 'Erro ao iniciar extração: ' + e.message)
+    pdfMostrarView('pdf-view-confirmacao')
   }
 }
 
